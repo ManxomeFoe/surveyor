@@ -1,27 +1,39 @@
 package com.surveyor.app;
 
-import android.content.Context;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.os.Build;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * JS bridge exposed to the web app as window.SurveyorNative.
  *
  * SECURITY: this WebView only ever loads our own bundled pages under
  * file:///android_asset/www/ — the WebViewClient keeps all navigation inside
- * the WebView and no remote content is ever loaded (the app is fully offline,
- * no INTERNET permission) — so the bridge is reachable only by our own code.
+ * the WebView and no remote content is ever rendered in it (INTERNET is held
+ * since v1.3 solely for the self-update download; nothing remote is loaded
+ * into the WebView) — so the bridge is reachable only by our own code.
  * minSdk 26 (> 17), so only @JavascriptInterface-annotated methods are exposed.
  *
  * Storage layout (contract v1.1 addendum): blobs live under
@@ -42,10 +54,31 @@ public class SurveyorBridge {
     private static final int MAX_KEY_LENGTH = 512;
     private static final int IO_BUFFER = 64 * 1024;
 
-    private final File dir;
+    // ---- self-update (v1.3 addendum) ----
+    private static final String UPDATE_URL_PREFIX = "https://github.com/ManxomeFoe/surveyor/";
+    private static final int CONNECT_TIMEOUT_MS = 10_000;
+    private static final int READ_TIMEOUT_MS = 30_000;
+    private static final int MAX_REDIRECTS = 5;
+    /** Progress events throttled to at most ~10/sec. */
+    private static final long PROGRESS_INTERVAL_MS = 100;
 
-    public SurveyorBridge(Context context) {
-        this.dir = new File(context.getFilesDir(), "usermaps");
+    private final File dir;
+    private final Activity activity;
+    private final WebView webView;
+    private final File updateApk;
+    private final File updateTmp;
+    private final AtomicBoolean downloadInFlight = new AtomicBoolean(false);
+
+    public SurveyorBridge(Activity activity, WebView webView) {
+        this.activity = activity;
+        this.webView = webView;
+        this.dir = new File(activity.getFilesDir(), "usermaps");
+        this.updateApk = new File(activity.getFilesDir(), ApkProvider.APK_NAME);
+        this.updateTmp = new File(activity.getFilesDir(), ApkProvider.APK_NAME + ".tmp");
+        // A leftover update.apk from a previous (installed or abandoned) update
+        // is stale by definition on a fresh app start — delete it.
+        if (updateApk.exists()) updateApk.delete();
+        if (updateTmp.exists()) updateTmp.delete();
     }
 
     /** @return "ok" or "err:&lt;message&gt;" */
@@ -131,6 +164,206 @@ public class SurveyorBridge {
             return json.append(']').toString();
         } catch (Throwable t) {
             return "[]";
+        }
+    }
+
+    // ------------------------------------------------- self-update (v1.3)
+
+    /**
+     * @return JSON like {"versionName":"1.3","versionCode":4} from PackageInfo.
+     * Best-effort on failure — never throws.
+     */
+    @JavascriptInterface
+    public String getAppVersion() {
+        String versionName = "unknown";
+        long versionCode = 0;
+        try {
+            PackageInfo pi = activity.getPackageManager()
+                    .getPackageInfo(activity.getPackageName(), 0);
+            if (pi.versionName != null) versionName = pi.versionName;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                versionCode = pi.getLongVersionCode();
+            } else {
+                @SuppressWarnings("deprecation")
+                long legacy = pi.versionCode;
+                versionCode = legacy;
+            }
+        } catch (Throwable ignored) {
+            // keep best-effort defaults
+        }
+        StringBuilder json = new StringBuilder("{\"versionName\":");
+        appendJsonString(json, versionName);
+        json.append(",\"versionCode\":").append(versionCode).append('}');
+        return json.toString();
+    }
+
+    /**
+     * Validates the URL and kicks off a background download of the release
+     * APK; progress/done/error are reported asynchronously to
+     * window.__updateEvent via evaluateJavascript on the UI thread.
+     *
+     * @return "ok" if the download was started, "err:busy" if one is already
+     *         in flight, or "err:&lt;message&gt;" for invalid input. Never throws.
+     */
+    @JavascriptInterface
+    public String startUpdateDownload(String url) {
+        try {
+            if (url == null || !url.startsWith(UPDATE_URL_PREFIX)) {
+                return "err:invalid url (must start with " + UPDATE_URL_PREFIX + ")";
+            }
+            if (!downloadInFlight.compareAndSet(false, true)) {
+                return "err:busy";
+            }
+            final String downloadUrl = url;
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    runDownload(downloadUrl);
+                }
+            }, "surveyor-update-download");
+            t.setDaemon(true);
+            t.start();
+            return "ok";
+        } catch (Throwable t) {
+            downloadInFlight.set(false);
+            return "err:" + safeMessage(t);
+        }
+    }
+
+    /** Background worker: fetch, stream to .tmp, rename, fire installer. */
+    private void runDownload(String url) {
+        HttpURLConnection conn = null;
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            // Follow redirects manually so we can insist every hop is https
+            // (GitHub 302s releases to objects.githubusercontent.com).
+            String current = url;
+            for (int hop = 0; ; hop++) {
+                URL u = new URL(current);
+                if (!"https".equals(u.getProtocol())) {
+                    throw new IllegalStateException("non-https redirect target");
+                }
+                conn = (HttpsURLConnection) u.openConnection();
+                conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
+                conn.setReadTimeout(READ_TIMEOUT_MS);
+                conn.setInstanceFollowRedirects(false);
+                int code = conn.getResponseCode();
+                if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
+                    String loc = conn.getHeaderField("Location");
+                    conn.disconnect();
+                    conn = null;
+                    if (loc == null || hop >= MAX_REDIRECTS) {
+                        throw new IllegalStateException("bad redirect (HTTP " + code + ")");
+                    }
+                    current = new URL(u, loc).toString();
+                    continue;
+                }
+                if (code != HttpURLConnection.HTTP_OK) {
+                    throw new IllegalStateException("HTTP " + code);
+                }
+                break;
+            }
+
+            long total = conn.getContentLengthLong(); // may be -1
+            in = conn.getInputStream();
+            out = new FileOutputStream(updateTmp);
+            byte[] buf = new byte[IO_BUFFER];
+            long received = 0;
+            long lastEvent = 0;
+            int lastPct = -1;
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                out.write(buf, 0, n);
+                received += n;
+                long now = System.currentTimeMillis();
+                if (now - lastEvent >= PROGRESS_INTERVAL_MS) {
+                    lastEvent = now;
+                    int pct = total > 0 ? (int) (received * 100 / total) : -1;
+                    if (pct != lastPct) {
+                        lastPct = pct;
+                        emitUpdateEvent("{\"phase\":\"progress\",\"pct\":" + pct + "}");
+                    }
+                }
+            }
+            out.flush();
+            out.close();
+            out = null;
+
+            if (updateApk.exists() && !updateApk.delete()) {
+                throw new IllegalStateException("cannot replace previous update.apk");
+            }
+            if (!updateTmp.renameTo(updateApk)) {
+                throw new IllegalStateException("cannot finalize update.apk");
+            }
+
+            emitUpdateEvent("{\"phase\":\"progress\",\"pct\":100}");
+            emitUpdateEvent("{\"phase\":\"done\"}");
+            launchInstaller();
+        } catch (Throwable t) {
+            updateTmp.delete();
+            StringBuilder ev = new StringBuilder("{\"phase\":\"error\",\"message\":");
+            appendJsonString(ev, safeMessage(t));
+            ev.append('}');
+            emitUpdateEvent(ev.toString());
+        } finally {
+            if (out != null) try { out.close(); } catch (Throwable ignored) { }
+            if (in != null) try { in.close(); } catch (Throwable ignored) { }
+            if (conn != null) try { conn.disconnect(); } catch (Throwable ignored) { }
+            downloadInFlight.set(false);
+        }
+    }
+
+    /**
+     * Posts window.__updateEvent(<json>) into the page. evaluateJavascript
+     * must run on the UI thread; the download thread hands it off via
+     * runOnUiThread, and the UI-thread body re-checks Activity/WebView state
+     * so a teardown race can never crash the app.
+     */
+    private void emitUpdateEvent(final String json) {
+        try {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        webView.evaluateJavascript(
+                                "window.__updateEvent&&window.__updateEvent(" + json + ");",
+                                null);
+                    } catch (Throwable ignored) {
+                        // WebView torn down mid-flight; drop the event.
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+            // Activity gone; drop the event.
+        }
+    }
+
+    /** ACTION_VIEW of our content:// URI so the system installer takes over. */
+    private void launchInstaller() {
+        try {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(ApkProvider.CONTENT_URI,
+                                "application/vnd.android.package-archive");
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        activity.startActivity(intent);
+                    } catch (Throwable t) {
+                        StringBuilder ev = new StringBuilder("{\"phase\":\"error\",\"message\":");
+                        appendJsonString(ev, "installer: " + safeMessage(t));
+                        ev.append('}');
+                        emitUpdateEvent(ev.toString());
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+            // Activity gone.
         }
     }
 

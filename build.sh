@@ -15,8 +15,11 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------- toolchain
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17
-SDK=/opt/homebrew/share/android-commandlinetools
+# CI-portable: honor JAVA_HOME / ANDROID_SDK from the environment (e.g. the
+# GitHub Actions ubuntu-latest runner); fall back to the local Homebrew paths
+# so a plain ./build.sh on this machine keeps working with zero args.
+export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@17}"
+SDK="${ANDROID_SDK:-/opt/homebrew/share/android-commandlinetools}"
 BT="$SDK/build-tools/36.0.0"
 PLATFORM="$SDK/platforms/android-36/android.jar"
 
@@ -91,19 +94,28 @@ echo "==> zipalign"
 "$ZIPALIGN" -f 4 "$BUILD/surveyor.unsigned.apk" "$BUILD/surveyor.aligned.apk"
 
 # -------------------------------------------------------------- 5. sign
-# Prefer the standard Android debug keystore; otherwise use (and create once)
-# a project-local one in dist/.
-KS="$HOME/.android/debug.keystore"
-if [ ! -f "$KS" ]; then
-    KS="$DIST/debug.keystore"
+# Keystore selection:
+#   1. $SURVEYOR_KEYSTORE — used VERBATIM if set and the file exists (CI: the
+#      repo-secret copy of the debug keystore; never generated here);
+#   2. the standard ~/.android/debug.keystore if present;
+#   3. a project-local dist/debug.keystore, generated once if absent
+#      (this machine's case — dist/debug.keystore is the signing key).
+# All options use the standard debug alias/passwords (androiddebugkey/android).
+if [ -n "${SURVEYOR_KEYSTORE:-}" ] && [ -f "${SURVEYOR_KEYSTORE}" ]; then
+    KS="$SURVEYOR_KEYSTORE"
+else
+    KS="$HOME/.android/debug.keystore"
     if [ ! -f "$KS" ]; then
-        echo "==> generating debug keystore at $KS"
-        "$KEYTOOL" -genkeypair \
-            -keystore "$KS" \
-            -alias androiddebugkey \
-            -storepass android -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "C=US, O=Android, CN=Android Debug"
+        KS="$DIST/debug.keystore"
+        if [ ! -f "$KS" ]; then
+            echo "==> generating debug keystore at $KS"
+            "$KEYTOOL" -genkeypair \
+                -keystore "$KS" \
+                -alias androiddebugkey \
+                -storepass android -keypass android \
+                -keyalg RSA -keysize 2048 -validity 10000 \
+                -dname "C=US, O=Android, CN=Android Debug"
+        fi
     fi
 fi
 
