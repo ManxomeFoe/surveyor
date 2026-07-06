@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "surveyor-webtest",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8641", "--directory", "/Users/cashrarrington/Desktop/Surveyor/extraction/webtest/serve"],
+      "port": 8641
+    },
+    {
+      "name": "surveyor-real",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8642", "--directory", "/Users/cashrarrington/Desktop/Surveyor/app/assets/www"],
+      "port": 8642
+    }
+  ]
+}

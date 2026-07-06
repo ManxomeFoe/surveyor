@@ -1,0 +1,17 @@
+# Build outputs — dist contains the signed APK and the debug keystore;
+# keystores must never be committed
+dist/
+app/build/
+
+# Python
+__pycache__/
+*.pyc
+
+# QA render artifacts from the extraction pipeline
+extraction/*.png
+
+# Local dev-server tree (absolute-path symlinks, machine-specific)
+extraction/webtest/serve/
+
+# OS noise
+.DS_Store

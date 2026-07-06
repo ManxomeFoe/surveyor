@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2415 3146">
+  <!-- TEST FIXTURE — fake street plan. Community clustered lower-left like the real map. -->
+  <rect x="0" y="0" width="2415" height="3146" fill="#f4f1ea"/>
+  <!-- streets -->
+  <g stroke="#c9c2b4" stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M 160 2650 L 500 2900 L 520 3060"/>
+    <path d="M 180 2900 L 470 2980"/>
+    <path d="M 300 2700 L 250 3050"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="2.5" fill="none" stroke-dasharray="10 8" stroke-linecap="round">
+    <path d="M 160 2650 L 500 2900 L 520 3060"/>
+  </g>
+  <!-- river -->
+  <path d="M 80 2600 C 60 2800 100 3000 60 3140" stroke="#a9c8de" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <!-- buildings (match data.js polygons) -->
+  <g fill="#d8d2c4" stroke="#8f887a" stroke-width="0.7">
+    <rect x="200" y="2700" width="8"  height="8"/>
+    <rect x="250" y="2734" width="8"  height="10"/>
+    <rect x="300" y="2768" width="14" height="8"/>
+    <rect x="220" y="2840" width="12" height="12"/>
+    <rect x="276" y="2880" width="14" height="8"/>
+    <rect x="345" y="2920" width="20" height="10"/>
+    <rect x="405" y="2960" width="6"  height="6"/>
+    <rect x="444" y="2998" width="16" height="16"/>
+  </g>
+  <!-- tiny printed house numbers, like the real plan -->
+  <g font-family="Helvetica, Arial, sans-serif" font-size="5" fill="#5a5346" text-anchor="middle">
+    <text x="204" y="2698">1</text>
+    <text x="254" y="2732">12</text>
+    <text x="307" y="2766">14</text>
+    <text x="226" y="2838">101</text>
+    <text x="283" y="2878">102</text>
+    <text x="355" y="2918">142</text>
+    <text x="408" y="2958">143</text>
+    <text x="452" y="2996">376</text>
+  </g>
+  <!-- landmark dots -->
+  <g fill="#b0562c">
+    <circle cx="330" cy="2800" r="3"/>
+    <circle cx="260" cy="2950" r="3"/>
+  </g>
+  <text x="1207" y="1500" font-family="Helvetica" font-size="60" fill="#ddd6c8" text-anchor="middle">TEST SHEET — mostly empty like the real plan</text>
+</svg>
