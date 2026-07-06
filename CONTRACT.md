@@ -132,6 +132,35 @@ also a detect button while in edit mode. Detection runs under the busy overlay,
 then shows dashed preview outlines + "Add N buildings / Cancel". Cap: if > 1500
 detections, abort with a friendly message. All tunables in one const block.
 
+## Self-update from GitHub (v1.3 addendum)
+
+Repo: https://github.com/ManxomeFoe/surveyor — releases carry `surveyor.apk`;
+`releases/latest/download/surveyor.apk` is the stable download URL. A GitHub
+Action builds + signs + publishes on every `v*` tag push, using the SAME debug
+keystore (repo secret) so in-place updates keep working.
+
+Web side checks https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest
+(on boot, >=24h apart, silent on failure; plus a manual menu item), compares
+tag_name against the installed version, prompts, then triggers the native
+download+install.
+
+### Bridge additions (Agent C, MainActivity/SurveyorBridge)
+- `getAppVersion()` -> `{"versionName":"1.3","versionCode":4}` (JSON string,
+  from PackageInfo; `{"versionName":"dev","versionCode":0}` never — errors
+  return best-effort values, no exceptions).
+- `startUpdateDownload(url)` -> `"ok"` or `"err:<message>"` (validation only —
+  URL must start with `https://github.com/ManxomeFoe/surveyor/`). Download runs
+  on a background thread (HttpsURLConnection, follows redirects — GitHub
+  redirects to objects.githubusercontent.com), writes `filesDir/update.apk`,
+  reports via `webView.evaluateJavascript` on the UI thread calling
+  `window.__updateEvent({phase:'progress',pct})`, `{phase:'done'}`, or
+  `{phase:'error',message}`. On done, fire the installer:
+  ACTION_VIEW of a `content://` URI served by an own plain
+  android.content.ContentProvider (NO androidx FileProvider) exported=false,
+  grantUriPermissions=true + FLAG_GRANT_READ_URI_PERMISSION.
+- Manifest: add INTERNET + REQUEST_INSTALL_PACKAGES permissions, provider
+  entry, versionCode 4 / versionName 1.3.
+
 ## Toolchain (Agent C)
 - JAVA_HOME=/opt/homebrew/opt/openjdk@17
 - ANDROID_SDK=/opt/homebrew/share/android-commandlinetools
