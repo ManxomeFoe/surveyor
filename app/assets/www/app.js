@@ -1257,7 +1257,7 @@
   function offerDetect() {
     showDialog({
       title: 'Detect buildings automatically?',
-      message: 'Surveyor can scan this map image for building-shaped marks and number them for you (top row first, left to right). You can correct mistakes afterwards.',
+      message: 'Fidalgo can scan this map image for building-shaped marks and number them for you (top row first, left to right). You can correct mistakes afterwards.',
       buttons: [
         { text: 'Skip' },
         { text: 'Detect', primary: true, onTap: runDetect }
@@ -2775,7 +2775,7 @@
     api: 'https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest',
     apkUrl: 'https://github.com/ManxomeFoe/surveyor/releases/latest/download/surveyor.apk',
     page: 'https://github.com/ManxomeFoe/surveyor/releases/latest',
-    fallbackVersion: '1.8',          // used when the native bridge is absent
+    fallbackVersion: '1.9',          // used when the native bridge is absent
     checkEveryMs: 24 * 3600 * 1000   // automatic checks at most once a day
   };
 
@@ -2816,7 +2816,7 @@
         if (latest && cmpVersions(latest, appVersion()) > 0) {
           showUpdateDialog(latest, rel);
         } else if (manual) {
-          toast('Surveyor is up to date (v' + appVersion() + ')');
+          toast('Fidalgo is up to date (v' + appVersion() + ')');
         }
       })
       .catch(function () {

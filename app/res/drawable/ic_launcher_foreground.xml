@@ -1,22 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Map-pin glyph (white) centered in the adaptive-icon safe zone. -->
+<!-- Fidalgo: minimalist morion helmet with a pencil across it -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- comb: solid crescent fin, baseline buried in the dome -->
+    <path
+        android:fillColor="#EDE7DA"
+        android:pathData="M44,40 C44,28 48.5,21.5 54,21.5 C59.5,21.5 64,28 64,40 Z"/>
+    <!-- dome -->
+    <path
+        android:fillColor="#EDE7DA"
+        android:pathData="M36,52 C36,39.5 44,32 54,32 C64,32 72,39.5 72,52 Z"/>
+    <!-- ridge line separating comb fin from dome -->
+    <path
+        android:strokeColor="#16305C"
+        android:strokeWidth="1.5"
+        android:pathData="M40,36 C44,33.3 49,32 54,32 C59,32 64,33.3 68,36"/>
+    <!-- brim: upswept, pointed tips -->
+    <path
+        android:fillColor="#EDE7DA"
+        android:pathData="M24.5,42.5 C29,52.5 40,56.5 54,56.5 C68,56.5 79,52.5 83.5,42.5 C84.1,41.2 85.6,41.7 85.2,43 C81.5,56 68,61.5 54,61.5 C40,61.5 26.5,56 22.8,43 C22.4,41.7 23.9,41.2 24.5,42.5 Z"/>
+    <!-- rivets along the dome base -->
+    <path
+        android:fillColor="#16305C"
+        android:pathData="M42,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M48,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M54,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M60,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M66,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0"/>
+
+    <!-- pencil crossing the helmet -->
     <group
-        android:scaleX="2.25"
-        android:scaleY="2.25"
-        android:translateX="27"
-        android:translateY="27">
-        <!-- Pin body -->
+        android:rotation="-45"
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- eraser -->
         <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M12,2C8.13,2 5,5.13 5,8.5c0,5.25 7,13.5 7,13.5s7,-8.25 7,-13.5C19,5.13 15.87,2 12,2z" />
-        <!-- House cut-out inside the pin (background blue shows through) -->
+            android:fillColor="#E07A73"
+            android:pathData="M27.8,53.5 L31.6,53.5 L31.6,60.5 L27.8,60.5 A1.8,1.8 0 0 1 26,58.7 L26,55.3 A1.8,1.8 0 0 1 27.8,53.5 Z"/>
+        <!-- ferrule -->
         <path
-            android:fillColor="#16305C"
-            android:pathData="M12,4.6L7.8,8.2h1.1v3.6h6.2V8.2h1.1L12,4.6z" />
+            android:fillColor="#9AA3AF"
+            android:pathData="M31,53.5 h3.6 v7 h-3.6 Z"/>
+        <!-- body -->
+        <path
+            android:fillColor="#F2B33D"
+            android:pathData="M34.6,53.5 h36 v7 h-36 Z"/>
+        <!-- facet lines -->
+        <path
+            android:fillColor="#D99A26"
+            android:pathData="M34.6,55.7 h36 v0.8 h-36 Z M34.6,58.1 h36 v0.8 h-36 Z"/>
+        <!-- wood tip -->
+        <path
+            android:fillColor="#EAD1A6"
+            android:pathData="M70.6,53.5 L79.6,57 L70.6,60.5 Z"/>
+        <!-- lead -->
+        <path
+            android:fillColor="#2B2B33"
+            android:pathData="M76.6,54.85 L79.6,57 L76.6,59.15 Z"/>
     </group>
 </vector>

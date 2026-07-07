@@ -1,6 +1,6 @@
-# Surveyor
+# Fidalgo
 
-An offline Android app for door-to-door field surveys in small communities,
+Fidalgo (formerly Surveyor) is an offline Android app for door-to-door field surveys in small communities,
 built around an interactive building-level street plan. Made for canvassing in
 Unalakleet, Alaska — but any community map can be added from inside the app.
 
