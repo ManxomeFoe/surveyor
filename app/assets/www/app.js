@@ -2133,6 +2133,116 @@
     });
   });
 
+  // --------------------------------------- self-update (GitHub releases)
+  var UPDATE = {
+    api: 'https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest',
+    apkUrl: 'https://github.com/ManxomeFoe/surveyor/releases/latest/download/surveyor.apk',
+    page: 'https://github.com/ManxomeFoe/surveyor/releases/latest',
+    fallbackVersion: '1.3',          // used when the native bridge is absent
+    checkEveryMs: 24 * 3600 * 1000   // automatic checks at most once a day
+  };
+
+  function appVersion() {
+    try {
+      if (window.SurveyorNative && SurveyorNative.getAppVersion) {
+        var v = JSON.parse(SurveyorNative.getAppVersion());
+        if (v && v.versionName) return String(v.versionName);
+      }
+    } catch (e) {}
+    return UPDATE.fallbackVersion;
+  }
+
+  // numeric per-component compare of "1.10" vs "v1.9" style strings
+  function cmpVersions(a, b) {
+    var pa = String(a).replace(/^v/i, '').split('.');
+    var pb = String(b).replace(/^v/i, '').split('.');
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var na = parseInt(pa[i], 10) || 0, nb = parseInt(pb[i], 10) || 0;
+      if (na !== nb) return na < nb ? -1 : 1;
+    }
+    return 0;
+  }
+
+  function checkForUpdate(manual) {
+    if (!window.fetch) return;
+    if (!manual) {
+      var last = 0;
+      try { last = +localStorage.getItem('surveyor:lastUpdateCheck') || 0; } catch (e) {}
+      if (Date.now() - last < UPDATE.checkEveryMs) return;
+    }
+    try { localStorage.setItem('surveyor:lastUpdateCheck', String(Date.now())); } catch (e) {}
+    if (manual) toast('Checking for updates…');
+    fetch(UPDATE.api, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (rel) {
+        var latest = rel && rel.tag_name;
+        if (latest && cmpVersions(latest, appVersion()) > 0) {
+          showUpdateDialog(latest, rel);
+        } else if (manual) {
+          toast('Surveyor is up to date (v' + appVersion() + ')');
+        }
+      })
+      .catch(function () {
+        if (manual) toast('Could not reach GitHub to check for updates');
+      });
+  }
+
+  function showUpdateDialog(tag, rel) {
+    var notes = String((rel && rel.body) || '').split('\n')[0].slice(0, 160);
+    showDialog({
+      title: 'Update available: ' + tag,
+      message: 'You have v' + appVersion() + '. Download and install the new version?' +
+               (notes ? '\n\n' + notes : '') +
+               '\n\nYour survey data stays on the phone.',
+      buttons: [
+        { text: 'Later' },
+        { text: 'Update', primary: true, onTap: startUpdate }
+      ]
+    });
+  }
+
+  function startUpdate() {
+    if (window.SurveyorNative && SurveyorNative.startUpdateDownload) {
+      window.__updateEvent = function (ev) {
+        if (!ev) return;
+        if (ev.phase === 'progress') {
+          $('busyText').textContent = 'Downloading update… ' +
+            (isFinite(ev.pct) ? Math.round(ev.pct) + '%' : '');
+        } else if (ev.phase === 'done') {
+          hideBusy();
+          toast('Opening the installer…');
+        } else if (ev.phase === 'error') {
+          hideBusy();
+          showDialog({
+            title: 'Update failed',
+            message: (ev.message || 'Download error') +
+                     ' — you can download the update in your browser instead.',
+            buttons: [
+              { text: 'Close' },
+              { text: 'Open browser', primary: true,
+                onTap: function () { window.open(UPDATE.page, '_blank'); } }
+            ]
+          });
+        }
+      };
+      showBusy('Downloading update…');
+      var res = 'err:no response';
+      try { res = SurveyorNative.startUpdateDownload(UPDATE.apkUrl); } catch (e) { res = 'err:' + e.message; }
+      if (String(res).indexOf('ok') !== 0) {
+        hideBusy();
+        toast('Could not start the download (' + res + ')');
+      }
+    } else {
+      // dev / plain-browser fallback
+      window.open(UPDATE.page, '_blank');
+    }
+  }
+
+  $('updateBtn').addEventListener('click', function () {
+    hideMenu();
+    checkForUpdate(true);
+  });
+
   // ---------------------------------------------------------------- boot
   function boot() {
     buildPalette();
@@ -2157,6 +2267,9 @@
                 : (builtins().length ? builtins()[0].id : userMaps[0].id);
     $('communitySelect').value = startId;
     setCommunity(startId);
+
+    // auto-check for updates once the map is up; never blocks offline use
+    setTimeout(function () { checkForUpdate(false); }, 4000);
   }
 
   if (document.readyState === 'loading') {

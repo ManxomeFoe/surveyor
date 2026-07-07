@@ -1,0 +1,50 @@
+name: Release APK
+
+# Every `v*` tag push builds, signs, and publishes surveyor.apk to that tag's
+# GitHub release. The in-app updater watches releases/latest, so shipping a
+# new version is: bump the manifest version, tag, push the tag.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+
+      # The same debug keystore every release is signed with — Android only
+      # installs updates in place when signatures match.
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "KEYSTORE_B64 secret is missing" >&2; exit 1; }
+          mkdir -p dist
+          echo "$KEYSTORE_B64" | base64 -d > dist/debug.keystore
+
+      - name: Build APK
+        run: |
+          ANDROID_SDK="$ANDROID_HOME" SURVEYOR_KEYSTORE=dist/debug.keystore ./build.sh
+
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --title "Surveyor $GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" dist/surveyor.apk --clobber

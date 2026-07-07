@@ -83,11 +83,12 @@ public class MainActivity extends Activity {
             }
         });
 
-        // v1.1: native blob storage for user-uploaded maps (window.SurveyorNative).
-        // Safe to expose: this WebView only ever loads our own bundled
-        // file:///android_asset/www/ pages — no remote content, no INTERNET
-        // permission — so nothing untrusted can reach the bridge.
-        webView.addJavascriptInterface(new SurveyorBridge(this), "SurveyorNative");
+        // v1.1+: native blob storage for user-uploaded maps and (v1.3) the
+        // self-update download (window.SurveyorNative). Safe to expose: this
+        // WebView only ever loads our own bundled file:///android_asset/www/
+        // pages — the WebViewClient keeps navigation internal and no remote
+        // content is ever rendered — so nothing untrusted can reach the bridge.
+        webView.addJavascriptInterface(new SurveyorBridge(this, webView), "SurveyorNative");
 
         // targetSdk 36 forces edge-to-edge on Android 15/16: consume system bar
         // (and cutout) insets as WebView padding so content never sits under the
