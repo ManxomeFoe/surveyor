@@ -15,6 +15,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
 /**
  * Surveyor: a full-screen WebView shell around the offline web app at
@@ -90,15 +91,24 @@ public class MainActivity extends Activity {
         // content is ever rendered — so nothing untrusted can reach the bridge.
         webView.addJavascriptInterface(new SurveyorBridge(this, webView), "SurveyorNative");
 
-        // targetSdk 36 forces edge-to-edge on Android 15/16: consume system bar
-        // (and cutout) insets as WebView padding so content never sits under the
-        // status/navigation bars. The padded strip shows BG_COLOR.
-        webView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+        // targetSdk 36 forces edge-to-edge on Android 15/16. A WebView ignores
+        // its own View padding when laying out web content, so insets must be
+        // applied to a wrapping container instead: the FrameLayout's padding
+        // shrinks the WebView's bounds and the padded strips show BG_COLOR
+        // behind the status/navigation bars. IME insets are included so the
+        // on-screen keyboard pushes content up instead of covering it.
+        final FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(BG_COLOR);
+        root.addView(webView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
             @Override
             public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Insets bars = insets.getInsets(
-                            WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                            WindowInsets.Type.systemBars()
+                            | WindowInsets.Type.displayCutout()
+                            | WindowInsets.Type.ime());
                     v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                     return WindowInsets.CONSUMED;
                 } else {
@@ -118,7 +128,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        setContentView(webView);
+        setContentView(root);
         webView.loadUrl(START_URL);
     }
 

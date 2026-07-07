@@ -2138,7 +2138,7 @@
     api: 'https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest',
     apkUrl: 'https://github.com/ManxomeFoe/surveyor/releases/latest/download/surveyor.apk',
     page: 'https://github.com/ManxomeFoe/surveyor/releases/latest',
-    fallbackVersion: '1.3',          // used when the native bridge is absent
+    fallbackVersion: '1.4',          // used when the native bridge is absent
     checkEveryMs: 24 * 3600 * 1000   // automatic checks at most once a day
   };
 
