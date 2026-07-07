@@ -1,0 +1,497 @@
+[
+ {
+  "name": "Fish Cannery",
+  "type": "Commercial",
+  "px": 801.8953254474327,
+  "py": 2977.200598599389,
+  "tag": 372,
+  "dist": 3.313110706464171,
+  "how": "inside"
+ },
+ {
+  "name": "Peace on Earth Pizza",
+  "type": "Commercial",
+  "px": 472.8409079192206,
+  "py": 2729.0260319318622,
+  "tag": 287,
+  "dist": 4.170264605050343,
+  "how": "inside"
+ },
+ {
+  "name": "Apartment Rentals",
+  "type": "Commercial",
+  "px": 403.74384621251374,
+  "py": 2176.434429999441,
+  "tag": 109,
+  "dist": 3.2326510045057675,
+  "how": "inside"
+ },
+ {
+  "name": "City Apartments",
+  "type": "Commercial",
+  "px": 579.0839775456116,
+  "py": 2072.848012519069,
+  "tag": 96,
+  "dist": 3.1566304510102214,
+  "how": "inside"
+ },
+ {
+  "name": "AC Store",
+  "type": "Commercial",
+  "px": 733.0627041319385,
+  "py": 2893.8102609841153,
+  "tag": "acc",
+  "dist": 3.9620182083625726,
+  "how": "inside"
+ },
+ {
+  "name": "Apartment Building U.N.C.",
+  "type": "Commercial",
+  "px": 332.36469904799014,
+  "py": 2218.8234904529527,
+  "tag": 116,
+  "dist": 3.869696027566884,
+  "how": "inside"
+ },
+ {
+  "name": "Old School Site",
+  "type": "Public",
+  "px": 614.8624307187274,
+  "py": 2921.7122795283794,
+  "tag": 350,
+  "dist": 4.993239507704808,
+  "how": "inside"
+ },
+ {
+  "name": "UNC Office Building & Future Post Office",
+  "type": "Public",
+  "px": 570.7720989594236,
+  "py": 2621.7108652191237,
+  "tag": 234,
+  "dist": 2.3058083863168717,
+  "how": "inside"
+ },
+ {
+  "name": "City Office & Radio",
+  "type": "Public",
+  "px": 278.8934679683298,
+  "py": 2494.7432689806446,
+  "tag": 180,
+  "dist": 3.4486999184965352,
+  "how": "near"
+ },
+ {
+  "name": "Covenant Church",
+  "type": "Public",
+  "px": 662.2421125462279,
+  "py": 2872.194556346163,
+  "tag": 335,
+  "dist": 5.011307851688899,
+  "how": "near"
+ },
+ {
+  "name": "NSHC New Clinic",
+  "type": "Public",
+  "px": 443.05888694524765,
+  "py": 2109.1062560835853,
+  "tag": "clinic",
+  "dist": 2.7572896710785244,
+  "how": "inside"
+ },
+ {
+  "name": "BSSD-Unalakeet School",
+  "type": "Public",
+  "px": 370.5360634177923,
+  "py": 2409.444061845541,
+  "tag": 163,
+  "dist": 4.641331438877422,
+  "how": "inside"
+ },
+ {
+  "name": "BLM Storage",
+  "type": "Public",
+  "px": 250.11664018779993,
+  "py": 2181.3368781013414,
+  "tag": null,
+  "dist": 58.97691310291766,
+  "how": "unmatched"
+ },
+ {
+  "name": "Boat Shop",
+  "type": "Other",
+  "px": 333.00646923016757,
+  "py": 2583.1749066654593,
+  "tag": 209,
+  "dist": 4.240297356967201,
+  "how": "near"
+ },
+ {
+  "name": "MEA & UVEC Electric",
+  "type": "Other",
+  "px": 526.488438195549,
+  "py": 2402.2079658610746,
+  "tag": 169,
+  "dist": 3.5133126150368006,
+  "how": "inside"
+ },
+ {
+  "name": "Hagelands Air",
+  "type": "Other",
+  "px": 232.82568053994328,
+  "py": 2123.5232091918588,
+  "tag": 98,
+  "dist": 6.165480268564275,
+  "how": "inside"
+ },
+ {
+  "name": "Unalakleet Lodge",
+  "type": "Other",
+  "px": 738.1964118322358,
+  "py": 2955.792130793445,
+  "tag": 361,
+  "dist": 1.6947590531153391,
+  "how": "inside"
+ },
+ {
+  "name": "West Coast Construction",
+  "type": "Other",
+  "px": 124.9606801494956,
+  "py": 1894.1907565183938,
+  "tag": 43,
+  "dist": 0.18453957860822784,
+  "how": "inside"
+ },
+ {
+  "name": "ATS",
+  "type": "Other",
+  "px": 150.20101105980575,
+  "py": 1974.156409142539,
+  "tag": 62,
+  "dist": 4.0699534705442115,
+  "how": "inside"
+ },
+ {
+  "name": "West Coast Aiport Services, PenAir, Bering Air, Northern Air Cargo, Everets Air Cargo",
+  "type": "Other",
+  "px": 124.1443188386038,
+  "py": 1862.9504125919193,
+  "tag": 42,
+  "dist": 0.43498914327127075,
+  "how": "inside"
+ },
+ {
+  "name": "AT&T Alascom",
+  "type": "Other",
+  "px": 549.2045611478388,
+  "py": 2404.1511548766866,
+  "tag": 178,
+  "dist": 13.201720691371955,
+  "how": "near"
+ },
+ {
+  "name": "Gas Station & More",
+  "type": "Other",
+  "px": 467.8576892577112,
+  "py": 2194.0296885874122,
+  "tag": 111,
+  "dist": 3.6750754101174685,
+  "how": "inside"
+ },
+ {
+  "name": "UNC Warehouse",
+  "type": "Other",
+  "px": 522.0696673868224,
+  "py": 2198.401687985286,
+  "tag": null,
+  "dist": 43.78682718769728,
+  "how": "unmatched"
+ },
+ {
+  "name": "BSSD Hanger",
+  "type": "Other",
+  "px": 161.8260009167716,
+  "py": 2015.4642356615514,
+  "tag": 76,
+  "dist": 4.02712975398762,
+  "how": "inside"
+ },
+ {
+  "name": "FAA Radio Towers",
+  "type": "Other",
+  "px": 480.6324576912448,
+  "py": 1581.9230843484402,
+  "tag": 40,
+  "dist": 0.984105537499583,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing U.N.C.",
+  "type": "Other",
+  "px": 226.29775431752205,
+  "py": 2252.142252258025,
+  "tag": 122,
+  "dist": 3.4200784398539406,
+  "how": "inside"
+ },
+ {
+  "name": "Catholic Church",
+  "type": "Other",
+  "px": 452.72612134180963,
+  "py": 2484.4832524117082,
+  "tag": 186,
+  "dist": 3.9549421750965403,
+  "how": "inside"
+ },
+ {
+  "name": "Post Office",
+  "type": "Other",
+  "px": 701.0906976331025,
+  "py": 2881.7514816801995,
+  "tag": 336,
+  "dist": 3.9726233016105015,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Duplex B.S.S.D.",
+  "type": "Other",
+  "px": 630.1203538840637,
+  "py": 2944.700163458474,
+  "tag": 355,
+  "dist": 3.4722780113785334,
+  "how": "inside"
+ },
+ {
+  "name": "Assembly of God Church",
+  "type": "Other",
+  "px": 666.611845520325,
+  "py": 3002.140953038819,
+  "tag": 366,
+  "dist": 1.586320812526906,
+  "how": "inside"
+ },
+ {
+  "name": "Former IRA Office",
+  "type": "Other",
+  "px": 653.024183661677,
+  "py": 2984.0964565668255,
+  "tag": 365,
+  "dist": 3.706213906228427,
+  "how": "inside"
+ },
+ {
+  "name": "Native Village of Unalakleet Buildings",
+  "type": "Other",
+  "px": 693.6716718235984,
+  "py": 3014.57560050115,
+  "tag": 373,
+  "dist": 4.13787409314475,
+  "how": "near"
+ },
+ {
+  "name": "Old BIA School",
+  "type": "Other",
+  "px": 661.7645838661119,
+  "py": 2920.3090083757415,
+  "tag": null,
+  "dist": 22.175611526052123,
+  "how": "unmatched"
+ },
+ {
+  "name": "B.S.S.D. Powerplant",
+  "type": "Other",
+  "px": 662.2247342076153,
+  "py": 2944.631423530169,
+  "tag": 356,
+  "dist": 2.675006566192211,
+  "how": "inside"
+ },
+ {
+  "name": "Trash Compactor",
+  "type": "Other",
+  "px": 646.4118990665302,
+  "py": 2305.037453454919,
+  "tag": 147,
+  "dist": 3.7666753175287755,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Duplex B.S.S.D.",
+  "type": "Other",
+  "px": 609.9204624937847,
+  "py": 2963.1793249212205,
+  "tag": 354,
+  "dist": 2.9946449371787036,
+  "how": "inside"
+ },
+ {
+  "name": "B.S.S.D. Powerplant",
+  "type": "Other",
+  "px": 674.2946094609797,
+  "py": 2944.3355582999066,
+  "tag": 357,
+  "dist": 3.0317287528120556,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing U.N.C.",
+  "type": "Other",
+  "px": 428.4028666475788,
+  "py": 2368.657638810575,
+  "tag": 153,
+  "dist": 3.2227093771313773,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing B.S.S.D.",
+  "type": "Other",
+  "px": 203.6119080875069,
+  "py": 2176.848414570093,
+  "tag": null,
+  "dist": 48.08738505090483,
+  "how": "unmatched"
+ },
+ {
+  "name": "NSHC Gift Shop/Ambulance Garage",
+  "type": "Other",
+  "px": 458.98295629024506,
+  "py": 2138.445551581681,
+  "tag": 103,
+  "dist": 3.841674556038402,
+  "how": "inside"
+ },
+ {
+  "name": "School District Housing",
+  "type": "Other",
+  "px": 365.04897100664675,
+  "py": 2468.734568398446,
+  "tag": 182,
+  "dist": 3.1985232685266247,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing",
+  "type": "Other",
+  "px": 261.98380003590137,
+  "py": 2366.191171117127,
+  "tag": 149,
+  "dist": 4.080861474566564,
+  "how": "near"
+ },
+ {
+  "name": "Native Village Offices",
+  "type": "Other",
+  "px": 383.10456852428615,
+  "py": 2374.227782204747,
+  "tag": 164,
+  "dist": 3.6064658190973824,
+  "how": "inside"
+ },
+ {
+  "name": "Housing B.S.S.D.",
+  "type": "Other",
+  "px": 211.4308311548084,
+  "py": 2210.5714570796117,
+  "tag": null,
+  "dist": 42.2031404103405,
+  "how": "unmatched"
+ },
+ {
+  "name": "Fish & Game",
+  "type": "Other",
+  "px": 209.35845414642245,
+  "py": 2197.2586298482493,
+  "tag": null,
+  "dist": 55.347159434103006,
+  "how": "unmatched"
+ },
+ {
+  "name": "B.S.S.D. Garage",
+  "type": "Other",
+  "px": 239.39917169883847,
+  "py": 2318.6671809591353,
+  "tag": 134,
+  "dist": 4.760989647892261,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing",
+  "type": "Other",
+  "px": 237.11528265289962,
+  "py": 2281.8203053791076,
+  "tag": 123,
+  "dist": 4.194364997463232,
+  "how": "inside"
+ },
+ {
+  "name": "Teacher Housing",
+  "type": "Other",
+  "px": 253.02278642822057,
+  "py": 2337.2077832715586,
+  "tag": 148,
+  "dist": 4.066638547726099,
+  "how": "inside"
+ },
+ {
+  "name": "State D.O.T. & PF Shop",
+  "type": "Other",
+  "px": 207.56064629461616,
+  "py": 2129.336677324027,
+  "tag": 101,
+  "dist": 0.9043595873630408,
+  "how": "inside"
+ },
+ {
+  "name": "FAA Housing",
+  "type": "Other",
+  "px": 251.32131876330823,
+  "py": 2201.4664027718827,
+  "tag": null,
+  "dist": 40.854056055992295,
+  "how": "unmatched"
+ },
+ {
+  "name": "Old Armory",
+  "type": "Other",
+  "px": 238.26404647901654,
+  "py": 2163.2115165572613,
+  "tag": null,
+  "dist": 45.412433729636504,
+  "how": "unmatched"
+ },
+ {
+  "name": "FAA Headquarters",
+  "type": "Other",
+  "px": 190.9863496730104,
+  "py": 2143.498420470394,
+  "tag": null,
+  "dist": 22.65920152712823,
+  "how": "unmatched"
+ },
+ {
+  "name": "Head Start",
+  "type": "Other",
+  "px": 476.16149679291993,
+  "py": 2415.1696971785277,
+  "tag": 168,
+  "dist": 4.612416115255848,
+  "how": "near"
+ },
+ {
+  "name": "BSSD-Unalakeet School",
+  "type": "Other",
+  "px": 298.80647091846913,
+  "py": 2415.99579211697,
+  "tag": 160,
+  "dist": 4.602120799327255,
+  "how": "inside"
+ },
+ {
+  "name": "City Hall & Office Rentals & Police/City Shop & Warehouse/Water Treatment & Pump",
+  "type": "Other",
+  "px": 471.52248632442206,
+  "py": 2435.0624810848385,
+  "tag": 172,
+  "dist": 9.075532488645864,
+  "how": "inside"
+ }
+]
