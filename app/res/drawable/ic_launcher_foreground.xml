@@ -6,6 +6,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <group android:translateY="12">
     <!-- comb: solid crescent fin, baseline buried in the dome -->
     <path
         android:fillColor="#EDE7DA"
@@ -28,6 +29,8 @@
         android:fillColor="#16305C"
         android:pathData="M42,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M48,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M54,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M60,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0 M66,49.4 m-1.15,0 a1.15,1.15 0 1,0 2.3,0 a1.15,1.15 0 1,0 -2.3,0"/>
 
+    </group>
+
     <!-- pencil crossing the helmet -->
     <group
         android:rotation="-45"
@@ -36,26 +39,26 @@
         <!-- eraser -->
         <path
             android:fillColor="#E07A73"
-            android:pathData="M27.8,53.5 L31.6,53.5 L31.6,60.5 L27.8,60.5 A1.8,1.8 0 0 1 26,58.7 L26,55.3 A1.8,1.8 0 0 1 27.8,53.5 Z"/>
+            android:pathData="M27.8,65.5 L31.6,65.5 L31.6,72.5 L27.8,72.5 A1.8,1.8 0 0 1 26,70.7 L26,67.3 A1.8,1.8 0 0 1 27.8,65.5 Z"/>
         <!-- ferrule -->
         <path
             android:fillColor="#9AA3AF"
-            android:pathData="M31,53.5 h3.6 v7 h-3.6 Z"/>
+            android:pathData="M31,65.5 h3.6 v7 h-3.6 Z"/>
         <!-- body -->
         <path
             android:fillColor="#F2B33D"
-            android:pathData="M34.6,53.5 h36 v7 h-36 Z"/>
+            android:pathData="M34.6,65.5 h36 v7 h-36 Z"/>
         <!-- facet lines -->
         <path
             android:fillColor="#D99A26"
-            android:pathData="M34.6,55.7 h36 v0.8 h-36 Z M34.6,58.1 h36 v0.8 h-36 Z"/>
+            android:pathData="M34.6,67.7 h36 v0.8 h-36 Z M34.6,70.1 h36 v0.8 h-36 Z"/>
         <!-- wood tip -->
         <path
             android:fillColor="#EAD1A6"
-            android:pathData="M70.6,53.5 L79.6,57 L70.6,60.5 Z"/>
+            android:pathData="M70.6,65.5 L79.6,69 L70.6,72.5 Z"/>
         <!-- lead -->
         <path
             android:fillColor="#2B2B33"
-            android:pathData="M76.6,54.85 L79.6,57 L76.6,59.15 Z"/>
+            android:pathData="M76.6,66.85 L79.6,69 L76.6,71.15 Z"/>
     </group>
 </vector>
