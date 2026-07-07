@@ -1,9 +1,16 @@
 package com.surveyor.app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -62,12 +69,47 @@ public class SurveyorBridge {
     /** Progress events throttled to at most ~10/sec. */
     private static final long PROGRESS_INTERVAL_MS = 100;
 
+    // ---- live location (v1.6 addendum) ----
+    /** Request code for the location runtime permission (file chooser uses 1001). */
+    static final int REQUEST_LOCATION_PERMISSION = 1002;
+    private static final long LOCATION_INTERVAL_MS = 2000;
+    private static final float LOCATION_MIN_DISTANCE_M = 1f;
+
     private final File dir;
     private final Activity activity;
     private final WebView webView;
     private final File updateApk;
     private final File updateTmp;
     private final AtomicBoolean downloadInFlight = new AtomicBoolean(false);
+
+    /** JS-desired location state; set from the JS bridge thread, read on UI thread. */
+    private volatile boolean locationDesired = false;
+    // The fields below are touched ONLY on the UI thread.
+    private boolean locationListening = false;
+    private boolean locationPermissionPending = false;
+    private LocationManager locationManager;
+
+    /** Single listener for both providers. Callbacks arrive on the main looper. */
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location loc) {
+            try {
+                if (loc == null) return;
+                emitLocationEvent("{\"phase\":\"fix\",\"lat\":" + loc.getLatitude()
+                        + ",\"lon\":" + loc.getLongitude()
+                        + ",\"accuracy\":" + (double) loc.getAccuracy()
+                        + ",\"ts\":" + loc.getTime() + "}");
+            } catch (Throwable ignored) {
+                // never let a callback crash the app
+            }
+        }
+
+        // Legacy interface methods (default since API 30, abstract before —
+        // explicit no-op overrides keep every API level safe).
+        @Override public void onStatusChanged(String provider, int status, Bundle extras) { }
+        @Override public void onProviderEnabled(String provider) { }
+        @Override public void onProviderDisabled(String provider) { }
+    };
 
     public SurveyorBridge(Activity activity, WebView webView) {
         this.activity = activity;
@@ -364,6 +406,201 @@ public class SurveyorBridge {
             });
         } catch (Throwable ignored) {
             // Activity gone.
+        }
+    }
+
+    // ------------------------------------------------- live location (v1.6)
+
+    /**
+     * Starts (or resumes) the live-location stream. Asynchronous: permission
+     * prompting and provider attachment happen on the UI thread; results are
+     * reported to window.__locationEvent as
+     * {phase:'started'|'fix'|'denied'|'unavailable'|'stopped'}.
+     *
+     * @return "ok" once the flow is initiated (even if permission is still
+     *         pending), or "err:&lt;reason&gt;". Never throws.
+     */
+    @JavascriptInterface
+    public String startLocation() {
+        try {
+            locationDesired = true;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    beginLocationFlow();
+                }
+            });
+            return "ok";
+        } catch (Throwable t) {
+            locationDesired = false;
+            return "err:" + safeMessage(t);
+        }
+    }
+
+    /** Stops the stream and clears the desired flag. @return "ok" (never throws). */
+    @JavascriptInterface
+    public String stopLocation() {
+        try {
+            locationDesired = false;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    detachLocationUpdates();
+                    emitLocationEvent("{\"phase\":\"stopped\"}");
+                }
+            });
+            return "ok";
+        } catch (Throwable t) {
+            return "ok"; // stop is best-effort by contract; desired flag is already false
+        }
+    }
+
+    /** MainActivity.onPause hook: silently detach (JS is paused too). */
+    void onActivityPause() {
+        try {
+            detachLocationUpdates();
+        } catch (Throwable ignored) { }
+    }
+
+    /** MainActivity.onResume hook: re-attach if JS still wants the stream. */
+    void onActivityResume() {
+        try {
+            if (locationDesired) {
+                beginLocationFlow();
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /**
+     * MainActivity routes Activity.onRequestPermissionsResult here.
+     * Proceeds if EITHER permission was granted (coarse-only just means worse
+     * accuracy); emits {phase:'denied'} and clears the desired flag otherwise
+     * (a later startLocation() may re-request; the system auto-suppresses the
+     * dialog after "don't ask again" and we land back here with a denial).
+     */
+    void onLocationPermissionResult(int[] grantResults) {
+        try {
+            locationPermissionPending = false;
+            boolean granted = false;
+            if (grantResults != null) {
+                for (int r : grantResults) {
+                    if (r == PackageManager.PERMISSION_GRANTED) {
+                        granted = true;
+                        break;
+                    }
+                }
+            }
+            if (!granted) {
+                locationDesired = false;
+                emitLocationEvent("{\"phase\":\"denied\"}");
+                return;
+            }
+            if (locationDesired) {
+                attachLocationUpdates();
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /** UI thread. Checks permission, requesting it on first use, then attaches. */
+    private void beginLocationFlow() {
+        try {
+            if (!locationDesired) return;
+            if (hasLocationPermission()) {
+                attachLocationUpdates();
+                return;
+            }
+            if (locationPermissionPending) return; // dialog already up
+            locationPermissionPending = true;
+            activity.requestPermissions(new String[] {
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, REQUEST_LOCATION_PERMISSION);
+        } catch (Throwable t) {
+            locationPermissionPending = false;
+            emitLocationEvent("{\"phase\":\"unavailable\"}");
+        }
+    }
+
+    private boolean hasLocationPermission() {
+        return activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED
+                || activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * UI thread. Subscribes the single listener to every enabled provider
+     * (GPS + network, 2000 ms / 1 m) on the main looper. SecurityException or
+     * any other failure degrades to {phase:'unavailable'} — never a crash.
+     */
+    private void attachLocationUpdates() {
+        if (locationListening) return;
+        try {
+            if (locationManager == null) {
+                locationManager = (LocationManager)
+                        activity.getSystemService(Activity.LOCATION_SERVICE);
+            }
+            if (locationManager == null) {
+                emitLocationEvent("{\"phase\":\"unavailable\"}");
+                return;
+            }
+            int attached = 0;
+            for (String provider : new String[] {
+                    LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER }) {
+                try {
+                    if (locationManager.isProviderEnabled(provider)) {
+                        locationManager.requestLocationUpdates(provider,
+                                LOCATION_INTERVAL_MS, LOCATION_MIN_DISTANCE_M,
+                                locationListener, Looper.getMainLooper());
+                        attached++;
+                    }
+                } catch (Throwable ignored) {
+                    // unknown/disabled provider or SecurityException on this
+                    // provider — try the other one
+                }
+            }
+            if (attached == 0) {
+                // No enabled provider right now. Keep locationDesired: if the
+                // user enables GPS and returns to the app, onResume re-tries.
+                emitLocationEvent("{\"phase\":\"unavailable\"}");
+                return;
+            }
+            locationListening = true;
+            emitLocationEvent("{\"phase\":\"started\"}");
+        } catch (Throwable t) {
+            emitLocationEvent("{\"phase\":\"unavailable\"}");
+        }
+    }
+
+    /** UI thread. Removes the listener; safe to call when not listening. */
+    private void detachLocationUpdates() {
+        if (!locationListening) return;
+        locationListening = false;
+        try {
+            if (locationManager != null) {
+                locationManager.removeUpdates(locationListener);
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /** Same hardened runOnUiThread + evaluateJavascript path as update events. */
+    private void emitLocationEvent(final String json) {
+        try {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        webView.evaluateJavascript(
+                                "window.__locationEvent&&window.__locationEvent(" + json + ");",
+                                null);
+                    } catch (Throwable ignored) {
+                        // WebView torn down; drop the event.
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+            // Activity gone; drop the event.
         }
     }
 

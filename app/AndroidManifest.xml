@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.surveyor.app"
-    android:versionCode="6"
-    android:versionName="1.5">
+    android:versionCode="7"
+    android:versionName="1.6">
 
     <!-- Survey data stays on-device. INTERNET is held ONLY for the v1.3
          self-update download from GitHub releases; REQUEST_INSTALL_PACKAGES
          lets the app hand the downloaded APK to the system installer. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- v1.6 blue-dot live location (foreground only, no background location). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:label="@string/app_name"

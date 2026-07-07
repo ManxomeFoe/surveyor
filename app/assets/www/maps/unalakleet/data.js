@@ -3,6 +3,13 @@ window.MAP_DATA["unalakleet"] = {
   name: "Unalakleet",
   viewBox: [0, 0, 1840.7, 3145.8],
   baseSvg: "maps/unalakleet/base.svg",
+  georef: {
+    type: 'affine',
+    // x = a*lon + b*lat + c ; y = d*lon + e*lat + f   (lon/lat WGS-84 -> page units)
+    // fit vs OSM footprints: 378 pairs, RMS 0.042 page units, max 0.068
+    toMap: [46299.364441404665, 0.24412943542708007, 7445008.35686663, 0.1936930946143506, -104447.71995007896, 6674217.875765436],
+    unitsPerMeter: 0.94146
+  },
   buildings: [
     {n:1,cx:1118.3,cy:127.6,pts:[[1098.7,136.9],[1133,141.1],[1136.2,115.4],[1120.2,113.4],[1119.5,118.8],[1101.2,116.6]]},
     {n:2,cx:1315.7,cy:384.5,pts:[[1312.5,380.8],[1311.9,387.6],[1318.9,388.2],[1319.5,381.4]]},

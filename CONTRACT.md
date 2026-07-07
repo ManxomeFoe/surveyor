@@ -161,6 +161,39 @@ download+install.
 - Manifest: add INTERNET + REQUEST_INSTALL_PACKAGES permissions, provider
   entry, versionCode 4 / versionName 1.3.
 
+## Live location (v1.6 addendum)
+
+Blue-dot live location like Google Maps. GPS lat/lon must be mapped into each
+community's map coordinate space.
+
+### Georeference format (shared)
+```js
+georef: {
+  type: 'affine',
+  // [a,b,c,d,e,f]:  x = a*lon + b*lat + c ;  y = d*lon + e*lat + f
+  toMap: [a, b, c, d, e, f],
+  unitsPerMeter: <map units per ground meter>   // for the accuracy circle
+}
+```
+- Built-in Unalakleet: `georef` lives in MAP_DATA (Agent A computes it by
+  matching extracted buildings to OSM footprints; RMS residual must be < 3 map
+  units and reported).
+- User maps: stored at `surveyor:<id>:georef` (from in-app calibration, owner:
+  orchestrator/web). JSON map packages may include a `georef` field.
+
+### Bridge additions (Agent C)
+- `startLocation()` -> "ok" | "err:<reason>". Requests the runtime permission
+  (classic requestPermissions/onRequestPermissionsResult, no androidx) on
+  first use, then streams fixes from LocationManager (GPS + network provider,
+  ~2 s / 1 m) as `window.__locationEvent({phase:'fix', lat, lon, accuracy, ts})`
+  plus lifecycle events `{phase:'started'|'denied'|'unavailable'|'stopped'}`.
+  All posts via runOnUiThread + evaluateJavascript, same hardening as existing
+  bridge methods.
+- `stopLocation()` -> "ok". Native must also stop updates in onPause and
+  restart in onResume while JS-desired state is on (track a desired flag).
+- Manifest: ACCESS_FINE_LOCATION + ACCESS_COARSE_LOCATION (no background
+  location).
+
 ## Toolchain (Agent C)
 - JAVA_HOME=/opt/homebrew/opt/openjdk@17
 - ANDROID_SDK=/opt/homebrew/share/android-commandlinetools

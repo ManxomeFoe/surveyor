@@ -241,6 +241,27 @@ button {
   pointer-events: none;
 }
 
+#gLoc { pointer-events: none; }
+.loc-acc {
+  fill: rgba(66, 133, 244, .14);
+  stroke: rgba(66, 133, 244, .35);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.loc-dot-outer { fill: #fff; }
+.loc-dot-inner { fill: #4285f4; }
+.loc-dot-pulse {
+  fill: none;
+  stroke: #4285f4;
+  animation: locPulse 2.4s ease-out infinite;
+}
+@keyframes locPulse {
+  0%   { r: 7;  stroke-opacity: .7; stroke-width: 2; }
+  100% { r: 22; stroke-opacity: 0;  stroke-width: .5; }
+}
+#locBtn.active { background: var(--accent, #1e88e5); color: #fff; }
+#locBtn.searching { color: var(--accent, #1e88e5); }
+
 #mapLayer {
   position: absolute;
   top: 0; left: 0;
@@ -362,7 +383,7 @@ button {
   color: #fff;
 }
 
-#markerHint, #editHint {
+#markerHint, #editHint, #locHint {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);

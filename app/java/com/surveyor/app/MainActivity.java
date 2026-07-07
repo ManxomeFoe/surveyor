@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_FILE_CHOOSER = 1001;
 
     private WebView webView;
+    private SurveyorBridge bridge;
 
     /** Pending <input type=file> callback; non-null while a chooser is open. */
     private ValueCallback<Uri[]> filePathCallback;
@@ -89,7 +90,8 @@ public class MainActivity extends Activity {
         // WebView only ever loads our own bundled file:///android_asset/www/
         // pages — the WebViewClient keeps navigation internal and no remote
         // content is ever rendered — so nothing untrusted can reach the bridge.
-        webView.addJavascriptInterface(new SurveyorBridge(this, webView), "SurveyorNative");
+        bridge = new SurveyorBridge(this, webView);
+        webView.addJavascriptInterface(bridge, "SurveyorNative");
 
         // targetSdk 36 forces edge-to-edge on Android 15/16. A WebView ignores
         // its own View padding when laying out web content, so insets must be
@@ -195,6 +197,19 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /** Routes the v1.6 location permission result back to the bridge. */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        if (requestCode == SurveyorBridge.REQUEST_LOCATION_PERMISSION) {
+            if (bridge != null) {
+                bridge.onLocationPermissionResult(grantResults);
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     /**
      * Classic back handling (manifest sets enableOnBackInvokedCallback="false"
      * so this keeps working on Android 13+): walk WebView history first.
@@ -214,10 +229,16 @@ public class MainActivity extends Activity {
         if (webView != null) {
             webView.onResume();
         }
+        if (bridge != null) {
+            bridge.onActivityResume(); // re-attach location updates if JS wants them
+        }
     }
 
     @Override
     protected void onPause() {
+        if (bridge != null) {
+            bridge.onActivityPause(); // release the location listener while backgrounded
+        }
         if (webView != null) {
             webView.onPause();
         }

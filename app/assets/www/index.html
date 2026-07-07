@@ -25,6 +25,7 @@
   <div id="menuDropdown" hidden>
     <button id="addMapBtn">Add map&#8230;</button>
     <button id="updateBtn">Check for updates&#8230;</button>
+    <button id="calibrateBtn" hidden>Calibrate location&#8230;</button>
     <button id="renameMapBtn" hidden>Rename map&#8230;</button>
     <button id="deleteMapBtn" class="danger-item" hidden>Delete map&#8230;</button>
     <button id="resetDataBtn" class="danger-item">Reset community data&#8230;</button>
@@ -44,6 +45,7 @@
       <g id="gFx"></g>
       <g id="gDetect"></g>
       <g id="gPins"></g>
+      <g id="gLoc"></g>
     </svg>
   </div>
 
@@ -61,6 +63,12 @@
   <button id="zoomInBtn"  class="ctl" aria-label="Zoom in">+</button>
   <button id="zoomOutBtn" class="ctl" aria-label="Zoom out">&#8722;</button>
   <button id="fitBtn"     class="ctl" aria-label="Fit map to screen">&#8982;</button>
+  <button id="locBtn"     class="ctl" aria-label="My location">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2ZM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"
+            fill="currentColor"/>
+    </svg>
+  </button>
   <button id="markerBtn"  class="ctl" aria-label="Add marker">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d="M12 2a7 7 0 0 0-7 7c0 4.6 5.3 10.4 6.6 11.8a.55.55 0 0 0 .8 0C13.7 19.4 19 13.6 19 9a7 7 0 0 0-7-7Z"
@@ -83,6 +91,7 @@
 </div>
 <div id="markerHint" hidden>Tap the map to drop a marker</div>
 <div id="editHint" hidden>Tap to add a building &#183; drag to draw one</div>
+<div id="locHint" hidden></div>
 
 <div id="busy" hidden>
   <div class="busy-card">

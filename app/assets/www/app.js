@@ -68,7 +68,7 @@
   // ---------------------------------------------------------------- DOM refs
   var stage = $('stage'), layer = $('mapLayer'), baseImg = $('baseImg'), overlay = $('overlay');
   var gFills = $('gFills'), gLabels = $('gLabels'), gHits = $('gHits'),
-      gFx = $('gFx'), gDetect = $('gDetect'), gPins = $('gPins');
+      gFx = $('gFx'), gDetect = $('gDetect'), gPins = $('gPins'), gLoc = $('gLoc');
 
   // ---------------------------------------------------------------- state
   var community = null;      // { id, name, dir }
@@ -293,6 +293,7 @@
   function applyTransform() {
     layer.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
     counterScalePins();
+    counterScaleLocDot();
   }
 
   function counterScalePins() {
@@ -472,6 +473,7 @@
         gesture.moved = true;
         flyToken++;
         userNavigated = true;
+        stopFollowingLocation();   // a manual pan takes over the camera
       }
       if (gesture.moved) {
         tx = gesture.startTx + dx;
@@ -556,6 +558,10 @@
     hideMenu();
     hideSearchResults();
 
+    if (calib.active) {
+      calibMapTap(cx, cy);
+      return;
+    }
     if (markerMode) {
       var pt = screenToMap(cx, cy);
       createMarker(pt.x, pt.y);
@@ -1876,6 +1882,10 @@
     fitView();
     setEditMode(false);
     if (markerMode) setMarkerMode(false);
+    // location state never carries across maps (different georefs)
+    if (calib.active) calibCancel();
+    setLocState(false);
+    locStop();
 
     if (isUserMap && pendingDetectOfferId === community.id) {
       pendingDetectOfferId = null;
@@ -2070,6 +2080,7 @@
     var isUser = !!(community && community.user);
     $('renameMapBtn').hidden = !isUser;
     $('deleteMapBtn').hidden = !isUser;
+    $('calibrateBtn').hidden = !isUser;
   }
 
   $('addMapBtn').addEventListener('click', function () {
@@ -2133,12 +2144,337 @@
     });
   });
 
+  // --------------------------------------- live location (blue dot)
+  // GPS lat/lon -> map coords via an affine georef: builtin maps carry it in
+  // MAP_DATA, user maps get one from the in-app calibration below.
+  var LOC = {
+    degLatMeters: 111320,          // meters per degree latitude
+    offMapMargin: 0.25,            // viewBox fractions before "off this map"
+    calibMinFixAcc: 35,            // m — reject calibration fixes worse than this
+    calibMinSpread: 30             // m — min ground distance between calib points
+  };
+
+  var locOn = false, locFollow = false, locLastFix = null, locOffMapToasted = false;
+  var locAccEl = null, locDotG = null;
+
+  function getGeoref() {
+    if (data && data.georef && data.georef.toMap) return data.georef;
+    if (isUserMap) {
+      var g = loadJSON(storeKey('georef'), null);
+      if (g && g.toMap && g.toMap.length === 6) return g;
+    }
+    return null;
+  }
+
+  function lonLatToMap(lon, lat, g) {
+    var m = g.toMap;
+    return { x: m[0] * lon + m[1] * lat + m[2],
+             y: m[3] * lon + m[4] * lat + m[5] };
+  }
+
+  function counterScaleLocDot() {
+    if (locDotG && locDotG.parentNode && locLastFix) {
+      locDotG.setAttribute('transform',
+        'translate(' + locDotG.getAttribute('data-x') + ' ' +
+        locDotG.getAttribute('data-y') + ') scale(' + (1 / s) + ')');
+    }
+  }
+
+  function removeLocDot() {
+    gLoc.textContent = '';
+    locAccEl = null; locDotG = null;
+  }
+
+  function drawLocFix(fix) {
+    var g = getGeoref();
+    if (!g) return;
+    var p = lonLatToMap(fix.lon, fix.lat, g);
+    var mx = vb.w * LOC.offMapMargin, my = vb.h * LOC.offMapMargin;
+    var off = p.x < vb.x - mx || p.x > vb.x + vb.w + mx ||
+              p.y < vb.y - my || p.y > vb.y + vb.h + my;
+    if (off) {
+      removeLocDot();
+      if (!locOffMapToasted) { toast('You appear to be off this map'); locOffMapToasted = true; }
+      return;
+    }
+    locOffMapToasted = false;
+    if (!locAccEl) {
+      locAccEl = svgEl('circle', { 'class': 'loc-acc' }, gLoc);
+      locDotG = svgEl('g', {}, gLoc);
+      svgEl('circle', { 'class': 'loc-dot-pulse', r: 7 }, locDotG);
+      svgEl('circle', { 'class': 'loc-dot-outer', r: 8 }, locDotG);
+      svgEl('circle', { 'class': 'loc-dot-inner', r: 5.5 }, locDotG);
+    }
+    var upm = g.unitsPerMeter || 1;
+    locAccEl.setAttribute('cx', p.x);
+    locAccEl.setAttribute('cy', p.y);
+    locAccEl.setAttribute('r', Math.max((fix.accuracy || 0) * upm, 1));
+    locDotG.setAttribute('data-x', p.x);
+    locDotG.setAttribute('data-y', p.y);
+    counterScaleLocDot();
+    if (locFollow) centerOn(p.x, p.y);
+  }
+
+  function centerOn(mapX, mapY) {
+    var sz = stageSize();
+    tx = sz.w / 2 - (mapX - vb.x) * s;
+    ty = sz.h / 2 - (mapY - vb.y) * s;
+    applyTransform();
+  }
+
+  // Native bridge if present, browser geolocation as the dev fallback.
+  var browserWatchId = null;
+  function locStart() {
+    if (window.SurveyorNative && SurveyorNative.startLocation) {
+      var res = 'err:no response';
+      try { res = SurveyorNative.startLocation(); } catch (e) { res = 'err:' + e.message; }
+      if (String(res).indexOf('ok') !== 0) {
+        toast('Location unavailable (' + res + ')');
+        setLocState(false);
+      }
+    } else if (navigator.geolocation) {
+      browserWatchId = navigator.geolocation.watchPosition(function (pos) {
+        window.__locationEvent({ phase: 'fix', lat: pos.coords.latitude,
+          lon: pos.coords.longitude, accuracy: pos.coords.accuracy, ts: pos.timestamp });
+      }, function () {
+        window.__locationEvent({ phase: 'denied' });
+      }, { enableHighAccuracy: true, maximumAge: 2000 });
+    } else {
+      toast('No location source available');
+      setLocState(false);
+    }
+  }
+  function locStop() {
+    if (window.SurveyorNative && SurveyorNative.stopLocation) {
+      try { SurveyorNative.stopLocation(); } catch (e) {}
+    }
+    if (browserWatchId != null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(browserWatchId);
+      browserWatchId = null;
+    }
+  }
+
+  function setLocState(on, follow) {
+    locOn = on;
+    locFollow = !!(on && follow);
+    var btn = $('locBtn');
+    btn.classList.toggle('active', locOn && locFollow);
+    btn.classList.toggle('searching', locOn && !locFollow);
+    if (!on) { removeLocDot(); locLastFix = null; locOffMapToasted = false; }
+  }
+
+  window.__locationEvent = function (ev) {
+    if (!ev) return;
+    if (ev.phase === 'fix') {
+      locLastFix = ev;
+      if (calib.active) { calibFixUpdated(); return; }
+      if (locOn) drawLocFix(ev);
+    } else if (ev.phase === 'denied') {
+      toast('Location permission was denied');
+      if (calib.active) calibCancel();
+      setLocState(false); locStop();
+    } else if (ev.phase === 'unavailable') {
+      toast('Location is turned off on this phone');
+      if (calib.active) calibCancel();
+      setLocState(false); locStop();
+    }
+  };
+
+  $('locBtn').addEventListener('click', function () {
+    if (!data) return;
+    if (calib.active) return;
+    if (!getGeoref()) {
+      if (isUserMap) offerCalibration();
+      else toast('This map has no location reference');
+      return;
+    }
+    if (!locOn) {
+      setLocState(true, true);
+      locStart();
+      toast('Finding your location…');
+    } else if (!locFollow) {
+      locFollow = true;
+      setLocState(true, true);
+      if (locLastFix) drawLocFix(locLastFix);
+    } else {
+      setLocState(false);
+      locStop();
+    }
+  });
+
+  // Called from the pan gesture: a manual pan stops following (the dot stays).
+  function stopFollowingLocation() {
+    if (locFollow) setLocState(true, false);
+  }
+
+  // ---------------------------- calibration (user maps without a georef)
+  var calib = { active: false, pairs: [] };
+
+  function offerCalibration() {
+    showDialog({
+      title: 'Link this map to GPS',
+      message: 'This map isn’t connected to real-world coordinates yet. To calibrate: walk to a spot you can identify on the map (a corner, a building), then tap that exact spot. Repeat at a second spot at least ' + LOC.calibMinSpread + ' m away.',
+      buttons: [
+        { text: 'Cancel' },
+        { text: 'Start', primary: true, onTap: calibStart }
+      ]
+    });
+  }
+
+  function calibStart() {
+    calib.active = true;
+    calib.pairs = [];
+    setEditMode(false);
+    if (markerMode) setMarkerMode(false);
+    locStart();
+    calibHint();
+  }
+
+  function calibHint(msg) {
+    var h = $('locHint');
+    h.textContent = msg ||
+      ('Point ' + (calib.pairs.length + 1) + ': stand at a recognizable spot, then tap it on the map' +
+       (calib.pairs.length >= 2 ? ' — or use the ✓ in the menu' : ''));
+    h.hidden = false;
+  }
+
+  function calibFixUpdated() { /* the hint could show accuracy; keep it simple */ }
+
+  function calibCancel() {
+    calib.active = false;
+    calib.pairs = [];
+    $('locHint').hidden = true;
+    setLocState(false);
+    locStop();
+  }
+
+  function calibMapTap(cx, cy) {
+    var fix = locLastFix;
+    if (!fix) { toast('Waiting for a GPS fix — stay in the open for a moment'); return; }
+    if (fix.accuracy > LOC.calibMinFixAcc) {
+      toast('GPS accuracy is ' + Math.round(fix.accuracy) + ' m — wait for a better fix');
+      return;
+    }
+    var pt = screenToMap(cx, cy);
+    if (!insideMap(pt.x, pt.y)) { toast('Tap on the map itself'); return; }
+    // ground distance to previous points must be meaningful
+    for (var i = 0; i < calib.pairs.length; i++) {
+      var q = calib.pairs[i];
+      var dE = (fix.lon - q.lon) * LOC.degLatMeters * Math.cos(fix.lat * Math.PI / 180);
+      var dN = (fix.lat - q.lat) * LOC.degLatMeters;
+      if (Math.sqrt(dE * dE + dN * dN) < LOC.calibMinSpread) {
+        toast('Too close to point ' + (i + 1) + ' — walk further before adding this one');
+        return;
+      }
+    }
+    calib.pairs.push({ lon: fix.lon, lat: fix.lat, x: pt.x, y: pt.y });
+    svgEl('circle', { cx: pt.x, cy: pt.y, r: 4, fill: '#1e88e5',
+                      stroke: '#fff', 'stroke-width': 1.5 }, gLoc);
+    if (calib.pairs.length < 2) {
+      toast('Point 1 saved');
+      calibHint();
+    } else {
+      showDialog({
+        title: calib.pairs.length + ' points set',
+        message: 'Two points are enough. A third point improves accuracy, especially if the map is at an angle.',
+        buttons: [
+          { text: 'Add another', onTap: function () { calibHint(); } },
+          { text: 'Finish', primary: true, onTap: calibFinish }
+        ]
+      });
+    }
+  }
+
+  function calibFinish() {
+    var georef = solveGeoref(calib.pairs);
+    calib.active = false;
+    $('locHint').hidden = true;
+    gLoc.textContent = '';
+    if (!georef) {
+      toast('Calibration failed — the points were too close together');
+      setLocState(false); locStop();
+      return;
+    }
+    saveJSON(storeKey('georef'), georef);
+    toast('Map linked to GPS');
+    setLocState(true, true);
+    if (locLastFix) drawLocFix(locLastFix);
+  }
+
+  // 2 pairs: similarity (scale+rotation+translation) on north-flipped local
+  // meters; 3+: full least-squares affine. Returns the contract georef object.
+  function solveGeoref(pairs) {
+    if (!pairs || pairs.length < 2) return null;
+    var lat0 = pairs[0].lat, lon0 = pairs[0].lon;
+    var kE = LOC.degLatMeters * Math.cos(lat0 * Math.PI / 180), kN = LOC.degLatMeters;
+    // ground coords in meters, N flipped so y-down maps need no reflection
+    var g = pairs.map(function (p) {
+      return { u: (p.lon - lon0) * kE, v: -(p.lat - lat0) * kN, x: p.x, y: p.y };
+    });
+    var A, B, C, D, E, F; // x = A*u + B*v + C ; y = D*u + E*v + F
+    if (pairs.length === 2) {
+      var du = g[1].u - g[0].u, dv = g[1].v - g[0].v;
+      var dx = g[1].x - g[0].x, dy = g[1].y - g[0].y;
+      var den = du * du + dv * dv;
+      if (den < 1) return null;
+      // complex division (dx+idy)/(du+idv): rotation+uniform scale
+      var re = (dx * du + dy * dv) / den, im = (dy * du - dx * dv) / den;
+      A = re; B = -im; D = im; E = re;
+      C = g[0].x - (A * g[0].u + B * g[0].v);
+      F = g[0].y - (D * g[0].u + E * g[0].v);
+    } else {
+      var fitX = lstsq3(g, 'x'), fitY = lstsq3(g, 'y');
+      if (!fitX || !fitY) return null;
+      A = fitX[0]; B = fitX[1]; C = fitX[2];
+      D = fitY[0]; E = fitY[1]; F = fitY[2];
+    }
+    var scale = (Math.sqrt(A * A + D * D) + Math.sqrt(B * B + E * E)) / 2;
+    if (!isFinite(scale) || scale <= 0) return null;
+    // compose with u = (lon-lon0)*kE, v = -(lat-lat0)*kN into lon/lat terms
+    var a = A * kE, b = -B * kN, c = C - a * lon0 - b * lat0;
+    var d = D * kE, e = -E * kN, f = F - d * lon0 - e * lat0;
+    return { type: 'affine', toMap: [a, b, c, d, e, f], unitsPerMeter: scale };
+  }
+
+  // least squares for t = p0*u + p1*v + p2 over the pairs (t = 'x'|'y')
+  function lstsq3(g, key) {
+    var Suu = 0, Suv = 0, Su = 0, Svv = 0, Sv = 0, n = g.length;
+    var Sut = 0, Svt = 0, St = 0;
+    for (var i = 0; i < n; i++) {
+      var u = g[i].u, v = g[i].v, t = g[i][key];
+      Suu += u * u; Suv += u * v; Su += u; Svv += v * v; Sv += v;
+      Sut += u * t; Svt += v * t; St += t;
+    }
+    // solve [Suu Suv Su; Suv Svv Sv; Su Sv n] p = [Sut Svt St]
+    var m = [[Suu, Suv, Su, Sut], [Suv, Svv, Sv, Svt], [Su, Sv, n, St]];
+    for (var col = 0; col < 3; col++) {
+      var piv = col;
+      for (var r2 = col + 1; r2 < 3; r2++) {
+        if (Math.abs(m[r2][col]) > Math.abs(m[piv][col])) piv = r2;
+      }
+      if (Math.abs(m[piv][col]) < 1e-9) return null;
+      var tmp = m[col]; m[col] = m[piv]; m[piv] = tmp;
+      for (var r3 = 0; r3 < 3; r3++) {
+        if (r3 === col) continue;
+        var k = m[r3][col] / m[col][col];
+        for (var c2 = col; c2 < 4; c2++) m[r3][c2] -= k * m[col][c2];
+      }
+    }
+    return [m[0][3] / m[0][0], m[1][3] / m[1][1], m[2][3] / m[2][2]];
+  }
+
+  $('calibrateBtn').addEventListener('click', function () {
+    hideMenu();
+    if (!isUserMap || !data) return;
+    offerCalibration();
+  });
+
   // --------------------------------------- self-update (GitHub releases)
   var UPDATE = {
     api: 'https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest',
     apkUrl: 'https://github.com/ManxomeFoe/surveyor/releases/latest/download/surveyor.apk',
     page: 'https://github.com/ManxomeFoe/surveyor/releases/latest',
-    fallbackVersion: '1.5',          // used when the native bridge is absent
+    fallbackVersion: '1.6',          // used when the native bridge is absent
     checkEveryMs: 24 * 3600 * 1000   // automatic checks at most once a day
   };
 
