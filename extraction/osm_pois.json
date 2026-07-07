@@ -1,0 +1,1098 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-07-07T19:48:00Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 150917270,
+  "lat": 63.8730556,
+  "lon": -160.7880556,
+  "tags": {
+    "ele": "2",
+    "gnis:feature_id": "1411517",
+    "name": "Unalakleet",
+    "name:en": "Unalakleet",
+    "name:ik": "Uŋalaqłiit",
+    "place": "village",
+    "population": "748",
+    "population:date": "2006",
+    "source:population": "US Census",
+    "wikidata": "Q79812",
+    "wikipedia": "en:Unalakleet, Alaska"
+  }
+},
+{
+  "type": "node",
+  "id": 5490583859,
+  "lat": 63.8652259,
+  "lon": -160.7784073,
+  "tags": {
+    "name": "Cranberry Slough",
+    "natural": "bay",
+    "source": "USGS Topo"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018902,
+  "lat": 63.9114258,
+  "lon": -160.7701098,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018903,
+  "lat": 63.9106871,
+  "lon": -160.7701298,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018904,
+  "lat": 63.9099132,
+  "lon": -160.7701140,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018905,
+  "lat": 63.9091708,
+  "lon": -160.7701140,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018906,
+  "lat": 63.9084069,
+  "lon": -160.7701136,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 10590018907,
+  "lat": 63.9076841,
+  "lon": -160.7701091,
+  "tags": {
+    "generator:method": "wind_turbine",
+    "generator:model": "NW100",
+    "generator:output:electricity": "100 kW",
+    "generator:source": "wind",
+    "manufacturer": "Northern Power Systems",
+    "name": "Unalakleet",
+    "power": "generator"
+  }
+},
+{
+  "type": "node",
+  "id": 12215208845,
+  "lat": 63.8713539,
+  "lon": -160.7843831,
+  "tags": {
+    "ele": "5.0064",
+    "ele:datum": "MSL",
+    "man_made": "monitoring_station",
+    "monitoring:air_pressure": "yes",
+    "monitoring:air_temperature": "yes",
+    "monitoring:water_level": "yes",
+    "monitoring:wind_direction": "yes",
+    "monitoring:wind_speed": "yes",
+    "name": "Unalakleet",
+    "operator": "Center for Operational Oceanographic Products and Services",
+    "operator:short": "CO-OPS",
+    "operator:type": "government",
+    "operator:wikidata": "Q123032876",
+    "ref": "9468333",
+    "shef:location_id": "ULRA2",
+    "source": "CO-OPS Metadata API",
+    "start_date": "2011-05-01",
+    "tidal": "yes",
+    "website": "https://tidesandcurrents.noaa.gov/stationhome.html?id=9468333",
+    "website:1": "https://www.ndbc.noaa.gov/station_page.php?station=ulra2",
+    "website:2": "https://water.noaa.gov/gauges/ulra2"
+  }
+},
+{
+  "type": "way",
+  "id": 8982743,
+  "center": {
+    "lat": 63.8725417,
+    "lon": -160.7900834
+  },
+  "tags": {
+    "highway": "service",
+    "name": "Dime Alley",
+    "service": "alley",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Dime",
+    "tiger:name_type": "Aly",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8982773,
+  "center": {
+    "lat": 63.8811745,
+    "lon": -160.7912444
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "5th Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "5th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983517,
+  "center": {
+    "lat": 63.8805160,
+    "lon": -160.7891467
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "8th Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "8th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983529,
+  "center": {
+    "lat": 63.8763780,
+    "lon": -160.7938371
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Beach Road West",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Beach",
+    "tiger:name_direction_suffix": "W",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983589,
+  "center": {
+    "lat": 63.8713399,
+    "lon": -160.7852092
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "B Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "C",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983644,
+  "center": {
+    "lat": 63.8760865,
+    "lon": -160.7959901
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Beach Drive",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Beach",
+    "tiger:name_type": "Dr",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983666,
+  "center": {
+    "lat": 63.8719215,
+    "lon": -160.7859832
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "D Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "D",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983733,
+  "center": {
+    "lat": 63.8732470,
+    "lon": -160.7884997
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "H Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "H",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983735,
+  "center": {
+    "lat": 63.8723614,
+    "lon": -160.7901112
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "H Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "H",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983774,
+  "center": {
+    "lat": 63.8848860,
+    "lon": -160.7511260
+  },
+  "tags": {
+    "location": "underground",
+    "name": "Underground Power Line",
+    "power": "line",
+    "tiger:cfcc": "C20",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Underground Power Line",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983810,
+  "center": {
+    "lat": 63.8736073,
+    "lon": -160.7911562
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "I Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "I",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983814,
+  "center": {
+    "lat": 63.8747459,
+    "lon": -160.7900930
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Main Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Main",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983852,
+  "center": {
+    "lat": 63.8730179,
+    "lon": -160.7890830
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "2nd Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "2nd",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983855,
+  "center": {
+    "lat": 63.8752157,
+    "lon": -160.7916086
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "2nd Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "2nd",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983860,
+  "center": {
+    "lat": 63.8788809,
+    "lon": -160.7972981
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Airport Drive",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Airport",
+    "tiger:name_type": "Dr",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983863,
+  "center": {
+    "lat": 63.8739910,
+    "lon": -160.7928651
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Ocean Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Ocean",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983866,
+  "center": {
+    "lat": 63.8761364,
+    "lon": -160.7910876
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "M Street",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "M",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983874,
+  "center": {
+    "lat": 63.8772903,
+    "lon": -160.7969205
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "School Building Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "School Building",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983885,
+  "center": {
+    "lat": 63.8798735,
+    "lon": -160.7911463
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "4th Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "4th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983887,
+  "center": {
+    "lat": 63.8809738,
+    "lon": -160.7924828
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "3rd Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "3rd",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983896,
+  "center": {
+    "lat": 63.8813308,
+    "lon": -160.7902367
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "7th Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "7th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983944,
+  "center": {
+    "lat": 63.8799622,
+    "lon": -160.7887501
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Tank Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Tank",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8983954,
+  "center": {
+    "lat": 63.8793802,
+    "lon": -160.7907399
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "O Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "O",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984422,
+  "center": {
+    "lat": 63.8826844,
+    "lon": -160.7908107
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Dike Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Dike",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984426,
+  "center": {
+    "lat": 63.8795742,
+    "lon": -160.7868768
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Dike Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Dike",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984472,
+  "center": {
+    "lat": 63.8801501,
+    "lon": -160.7902656
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "6th Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "6th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984493,
+  "center": {
+    "lat": 63.8784991,
+    "lon": -160.7895262
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Pond Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Pond",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984510,
+  "center": {
+    "lat": 63.8814768,
+    "lon": -160.7889014
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "9th Street",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "9th",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no",
+    "tiger:separated": "no",
+    "tiger:source": "tiger_import_dch_v0.6_20070809",
+    "tiger:tlid": "191328852"
+  }
+},
+{
+  "type": "way",
+  "id": 8984539,
+  "center": {
+    "lat": 63.8718802,
+    "lon": -160.7891847
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "F Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "F",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984551,
+  "center": {
+    "lat": 63.8710592,
+    "lon": -160.7854061
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "A Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "River;Main",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984555,
+  "center": {
+    "lat": 63.8734498,
+    "lon": -160.7875270
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "River Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "River",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984582,
+  "center": {
+    "lat": 63.8727054,
+    "lon": -160.7879911
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "G Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "G",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984621,
+  "center": {
+    "lat": 63.8747233,
+    "lon": -160.7905953
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "J Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "J",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984660,
+  "center": {
+    "lat": 63.8769994,
+    "lon": -160.7902174
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Beach Road East",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Beach",
+    "tiger:name_direction_suffix": "E",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984666,
+  "center": {
+    "lat": 63.8749797,
+    "lon": -160.7930221
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "K Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "K",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984672,
+  "center": {
+    "lat": 63.8802031,
+    "lon": -160.7986521
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Airport Road",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Airport",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984673,
+  "center": {
+    "lat": 63.8798923,
+    "lon": -160.7927489
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Airport Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Airport",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984683,
+  "center": {
+    "lat": 63.9091780,
+    "lon": -160.7231091
+  },
+  "tags": {
+    "highway": "unclassified",
+    "name": "North River Road",
+    "source": "DG",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "North River",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984701,
+  "center": {
+    "lat": 63.8753141,
+    "lon": -160.7936888
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "L Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "L",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984702,
+  "center": {
+    "lat": 63.8758408,
+    "lon": -160.7917488
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "L Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "L",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 8984913,
+  "center": {
+    "lat": 63.8818377,
+    "lon": -160.7917205
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "P Street",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "P",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 242772873,
+  "center": {
+    "lat": 63.8691249,
+    "lon": -160.6762915
+  },
+  "tags": {
+    "name": "Unalakleet River",
+    "waterway": "river",
+    "wikidata": "Q763999",
+    "wikipedia": "en:Unalakleet River"
+  }
+},
+{
+  "type": "way",
+  "id": 478197250,
+  "center": {
+    "lat": 63.8716960,
+    "lon": -160.7857111
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "C Street",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 478197257,
+  "center": {
+    "lat": 63.8714077,
+    "lon": -160.7870143
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "Ocean Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "Ocean",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 478197258,
+  "center": {
+    "lat": 63.8715689,
+    "lon": -160.7870621
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "2nd Street",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "2nd",
+    "tiger:name_type": "St",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 494033883,
+  "center": {
+    "lat": 63.8728962,
+    "lon": -160.7574701
+  },
+  "tags": {
+    "highway": "footway",
+    "name": "Kaltag Portage Trail",
+    "note": "I aligned this section with Bing and with GPS traces of the Iditarod TriL northern route",
+    "source:position": "Bing;GPS Traces",
+    "surface": "ice",
+    "tiger:cfcc": "A51:A71",
+    "tiger:county": "Nome, AK:Yukon-Koyukuk, AK",
+    "tiger:name_base": "Kaltag Portage",
+    "tiger:name_type": "Trl",
+    "tiger:reviewed": "aerial"
+  }
+},
+{
+  "type": "way",
+  "id": 494034589,
+  "center": {
+    "lat": 63.8724903,
+    "lon": -160.6729845
+  },
+  "tags": {
+    "highway": "footway",
+    "name": "Kaltag Portage Trail",
+    "note": "I aligned this section with Bing and with GPS traces of the Iditarod TriL northern route",
+    "source:position": "Bing;GPS Traces",
+    "surface": "ice",
+    "tiger:cfcc": "A51:A71",
+    "tiger:county": "Nome, AK:Yukon-Koyukuk, AK",
+    "tiger:name_base": "Kaltag Portage",
+    "tiger:name_type": "Trl",
+    "tiger:reviewed": "aerial"
+  }
+},
+{
+  "type": "way",
+  "id": 494034590,
+  "center": {
+    "lat": 63.8712667,
+    "lon": -160.7094477
+  },
+  "tags": {
+    "highway": "footway",
+    "name": "Kaltag Portage Trail",
+    "note": "I aligned this section with Bing and with GPS traces of the Iditarod TriL northern route",
+    "source:position": "Bing;GPS Traces",
+    "surface": "dirt",
+    "tiger:cfcc": "A51:A71",
+    "tiger:county": "Nome, AK:Yukon-Koyukuk, AK",
+    "tiger:name_base": "Kaltag Portage",
+    "tiger:name_type": "Trl",
+    "tiger:reviewed": "aerial"
+  }
+},
+{
+  "type": "way",
+  "id": 494972603,
+  "center": {
+    "lat": 64.0781011,
+    "lon": -160.8942898
+  },
+  "tags": {
+    "highway": "path",
+    "name": "Iditarod National Historic Trail",
+    "short_name": "Iditarod Trail",
+    "source:position": "Digital Globe;GPS Traces",
+    "surface": "ground"
+  }
+},
+{
+  "type": "way",
+  "id": 494972604,
+  "center": {
+    "lat": 63.9108208,
+    "lon": -160.8135330
+  },
+  "tags": {
+    "highway": "unclassified",
+    "name": "Iditarod Trail",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:reviewed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 507868672,
+  "center": {
+    "lat": 63.8894944,
+    "lon": -160.7963884
+  },
+  "tags": {
+    "addr:state": "AK",
+    "aeroway": "aerodrome",
+    "closest_town": "Unalakleet, Alaska",
+    "ele": "5",
+    "gnis:feature_id": "1418052",
+    "iata": "UNK",
+    "icao": "PAUN",
+    "is_in": "US",
+    "name": "Unalakleet Airport",
+    "name:en": "Unalakleet Airport",
+    "operator": "State of Alaska DOT&PF",
+    "source": "wikipedia",
+    "type": "public",
+    "wikidata": "Q4475609",
+    "wikipedia": "en:Unalakleet Airport"
+  }
+},
+{
+  "type": "way",
+  "id": 1188578295,
+  "center": {
+    "lat": 63.8775270,
+    "lon": -160.7914027
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "River Road",
+    "surface": "unpaved",
+    "tiger:cfcc": "A41",
+    "tiger:county": "Nome, AK",
+    "tiger:name_base": "River",
+    "tiger:name_type": "Rd",
+    "tiger:reviewed": "no"
+  }
+}
+
+  ]
+}
