@@ -194,6 +194,31 @@ georef: {
 - Manifest: ACCESS_FINE_LOCATION + ACCESS_COARSE_LOCATION (no background
   location).
 
+## v1.7 addendum: compass heading + color wheel
+
+### Compass bridge (Agent C)
+- `startCompass()` -> "ok" | "err:<reason>", `stopCompass()` -> "ok".
+- Source: rotation-vector sensor (fall back to accelerometer+magnetometer if
+  absent), SensorManager.getOrientation, remapped for display rotation.
+- Output azimuth in degrees clockwise from TRUE north: apply magnetic
+  declination via GeomagneticField using the most recent location fix the
+  bridge has seen (0 declination until a fix exists).
+- Events: `window.__headingEvent({deg})` throttled to ~10/sec and only when
+  the value changed by >= 1 degree; `{phase:'unavailable'}` if no usable
+  sensor. Same UI-thread evaluateJavascript pattern + lifecycle pause/resume
+  as location (pause in onPause, resume if desired).
+
+### Color wheel widget (Agent B)
+- Self-contained files ONLY: `app/assets/www/colorwheel.js` +
+  `app/assets/www/colorwheel.css` (do not touch any other file — index.html
+  script/link tags are added by the orchestrator).
+- API: `window.ColorWheel.open({ initial: '#rrggbb', onPick: fn(hex),
+  onCancel: fn })` — builds its own modal DOM (z-index above the app's bottom
+  sheet at z 60; use 200+), HSV disk (hue angle + saturation radius) rendered
+  on canvas + a vertical value slider + live preview + hex readout +
+  Cancel / OK buttons. Pointer-events driven, drag-friendly, touch targets
+  >= 44px, ES5-compatible vanilla JS, no dependencies, no fetch.
+
 ## Toolchain (Agent C)
 - JAVA_HOME=/opt/homebrew/opt/openjdk@17
 - ANDROID_SDK=/opt/homebrew/share/android-commandlinetools

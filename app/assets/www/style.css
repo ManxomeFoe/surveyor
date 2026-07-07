@@ -241,7 +241,26 @@ button {
   pointer-events: none;
 }
 
+.route-line {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .85;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.route-hit {
+  fill: none;
+  stroke: rgba(0,0,0,0);
+  stroke-width: 22;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+}
+#routeBtn.active { background: var(--accent, #1e88e5); color: #fff; }
+
 #gLoc { pointer-events: none; }
+.loc-arrow { fill: #4285f4; opacity: .9; }
 .loc-acc {
   fill: rgba(66, 133, 244, .14);
   stroke: rgba(66, 133, 244, .35);

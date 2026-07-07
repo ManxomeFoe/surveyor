@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Surveyor</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="colorwheel.css">
 </head>
 <body>
 
@@ -40,6 +41,7 @@
     <img id="baseImg" alt="" draggable="false">
     <svg id="overlay" xmlns="http://www.w3.org/2000/svg">
       <g id="gFills"></g>
+      <g id="gRoutes"></g>
       <g id="gLabels"></g>
       <g id="gHits"></g>
       <g id="gFx"></g>
@@ -63,6 +65,14 @@
   <button id="zoomInBtn"  class="ctl" aria-label="Zoom in">+</button>
   <button id="zoomOutBtn" class="ctl" aria-label="Zoom out">&#8722;</button>
   <button id="fitBtn"     class="ctl" aria-label="Fit map to screen">&#8982;</button>
+  <button id="routeBtn"   class="ctl" aria-label="Draw route">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <circle cx="5" cy="19" r="2.4" fill="currentColor"/>
+      <circle cx="12" cy="7" r="2.4" fill="currentColor"/>
+      <circle cx="19" cy="15" r="2.4" fill="currentColor"/>
+      <path d="M6 17.2 11 9m2.2 0.4 4.4 4.2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </button>
   <button id="locBtn"     class="ctl" aria-label="My location">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2ZM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"
@@ -92,6 +102,7 @@
 <div id="markerHint" hidden>Tap the map to drop a marker</div>
 <div id="editHint" hidden>Tap to add a building &#183; drag to draw one</div>
 <div id="locHint" hidden></div>
+<div id="routeHint" hidden>Tap to add route points &#183; tap the route button to finish</div>
 
 <div id="busy" hidden>
   <div class="busy-card">
@@ -141,6 +152,7 @@
 <div id="toast" hidden></div>
 
 <script src="maps/index.js"></script>
+<script src="colorwheel.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

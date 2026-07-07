@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ColorWheel scratch test</title>
+<link rel="stylesheet" href="/app/assets/www/colorwheel.css">
+<style>
+  body { font-family: sans-serif; padding: 16px; background: #dfe5ea; }
+  button { min-height: 44px; padding: 0 16px; font-size: 15px; margin-right: 8px; }
+  #log { background: #fff; padding: 10px; border-radius: 8px; margin-top: 14px;
+         font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+<h2>ColorWheel scratch test</h2>
+<button id="openBtn">Open (initial #1E88E5)</button>
+<button id="openShortBtn">Open (#47b shorthand)</button>
+<button id="openBadBtn">Open (bad initial)</button>
+<pre id="log"></pre>
+
+<script src="/app/assets/www/colorwheel.js"></script>
+<script>
+  window.results = [];
+  function logIt(x) {
+    window.results.push(x);
+    document.getElementById('log').textContent = JSON.stringify(window.results, null, 1);
+  }
+  function opener(initial) {
+    return function () {
+      window.lastHandle = ColorWheel.open({
+        initial: initial,
+        onPick: function (hex) { logIt({ pick: hex }); },
+        onCancel: function () { logIt({ cancel: true }); }
+      });
+    };
+  }
+  document.getElementById('openBtn').addEventListener('click', opener('#1E88E5'));
+  document.getElementById('openShortBtn').addEventListener('click', opener('#47b'));
+  document.getElementById('openBadBtn').addEventListener('click', opener('not-a-color'));
+</script>
+</body>
+</html>

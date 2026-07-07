@@ -61,14 +61,17 @@
     '#6d4c41', // brown
     '#757575'  // gray
   ];
-  var TAP_SLOP = 9;          // px of movement before a touch counts as a drag
+  var TAP_SLOP = 9;          // px of movement before a MOUSE press counts as a drag
+  var TAP_SLOP_TOUCH = 18;   // fingers jitter far more than mice: quick taps on a
+                             // touchscreen easily wander >9px and must still count
   var PIN_SIZE = 34;         // on-screen pin height in px (constant across zoom)
   var WHEEL_SENS = 0.0016;
 
   // ---------------------------------------------------------------- DOM refs
   var stage = $('stage'), layer = $('mapLayer'), baseImg = $('baseImg'), overlay = $('overlay');
   var gFills = $('gFills'), gLabels = $('gLabels'), gHits = $('gHits'),
-      gFx = $('gFx'), gDetect = $('gDetect'), gPins = $('gPins'), gLoc = $('gLoc');
+      gFx = $('gFx'), gDetect = $('gDetect'), gPins = $('gPins'), gLoc = $('gLoc'),
+      gRoutes = $('gRoutes');
 
   // ---------------------------------------------------------------- state
   var community = null;      // { id, name, dir }
@@ -78,6 +81,7 @@
   var houseColors = {};      // { n -> "#rrggbb" }
   var legendEntries = [];    // [ { color, label } ] (insertion order preserved)
   var markers = [];          // [ { id, x, y, label } ]
+  var routes = [];           // [ { id, label, color, pts:[[x,y],...] } ]
 
   var bldEls = {};           // n -> { fill, label } (created lazily)
   var bldByN = {};           // n -> building record (from MAP_DATA or user set)
@@ -137,6 +141,18 @@
                        x: +m.x, y: +m.y, label: String(m.label || '') });
       }
     }
+    routes = [];
+    var rawRoutes = loadJSON(storeKey('routes'), []);
+    for (var r = 0; r < rawRoutes.length; r++) {
+      var rt = rawRoutes[r];
+      if (rt && rt.pts && rt.pts.length >= 2) {
+        routes.push({ id: String(rt.id || ('r' + r + '_' + Date.now())),
+                      label: String(rt.label || ''),
+                      color: normHex(rt.color) || '#1e88e5',
+                      pts: rt.pts });
+      }
+    }
+    renderRoutes();
   }
 
   // ------------------------------------------------- blob storage adapter
@@ -433,14 +449,15 @@
     pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
     nPointers++;
     if (nPointers === 1) {
+      var slop = e.pointerType === 'touch' ? TAP_SLOP_TOUCH : TAP_SLOP;
       if (editMode) {
         // edit mode: one-finger drag draws a rectangle building (no panning)
-        gesture = { mode: 'draw', moved: false,
+        gesture = { mode: 'draw', moved: false, slop: slop,
                     downX: e.clientX, downY: e.clientY,
                     startMap: screenToMap(e.clientX, e.clientY) };
       } else {
         gesture = { mode: 'pan', startX: e.clientX, startY: e.clientY,
-                    startTx: tx, startTy: ty, moved: false,
+                    startTx: tx, startTy: ty, moved: false, slop: slop,
                     downX: e.clientX, downY: e.clientY };
       }
     } else if (nPointers === 2) {
@@ -469,7 +486,7 @@
     if (gesture.mode === 'pan' && nPointers === 1) {
       var dx = e.clientX - gesture.startX, dy = e.clientY - gesture.startY;
       if (!gesture.moved &&
-          Math.hypot(e.clientX - gesture.downX, e.clientY - gesture.downY) > TAP_SLOP) {
+          Math.hypot(e.clientX - gesture.downX, e.clientY - gesture.downY) > (gesture.slop || TAP_SLOP)) {
         gesture.moved = true;
         flyToken++;
         userNavigated = true;
@@ -482,7 +499,7 @@
       }
     } else if (gesture.mode === 'draw' && nPointers === 1) {
       if (!gesture.moved &&
-          Math.hypot(e.clientX - gesture.downX, e.clientY - gesture.downY) > TAP_SLOP) {
+          Math.hypot(e.clientX - gesture.downX, e.clientY - gesture.downY) > (gesture.slop || TAP_SLOP)) {
         gesture.moved = true;
       }
       if (gesture.moved) updateDrawPreview(gesture.startMap, screenToMap(e.clientX, e.clientY));
@@ -562,6 +579,10 @@
       calibMapTap(cx, cy);
       return;
     }
+    if (routeMode) {
+      routeAddVertex(cx, cy);
+      return;
+    }
     if (markerMode) {
       var pt = screenToMap(cx, cy);
       createMarker(pt.x, pt.y);
@@ -571,6 +592,8 @@
     if (elAt) {
       var pin = closestByClass(elAt, 'pin');
       if (pin) { openPinDialog(pin.getAttribute('data-mid')); return; }
+      var routeHit = closestByClass(elAt, 'route-hit');
+      if (routeHit) { openRouteDialog(routeHit.getAttribute('data-rid')); return; }
       var hit = closestByClass(elAt, 'hit');
       if (hit) { openColorSheet(hit.getAttribute('data-n')); return; }
     }
@@ -617,6 +640,7 @@
     gFx.textContent = '';
     gDetect.textContent = '';
     gPins.textContent = '';
+    gRoutes.textContent = '';
     bldEls = {};
     bldByN = {};
     bldHits = {};
@@ -1305,6 +1329,20 @@
   $('customColor').addEventListener('change', function () {
     applyColor(sheetN, this.value);
   });
+  // v1.7: RGB wheel replaces the native slider picker when available. Capture
+  // phase so the label's default input-open never fires.
+  $('customColorLbl').addEventListener('click', function (ev) {
+    if (!(window.ColorWheel && window.ColorWheel.open)) return; // native fallback
+    ev.preventDefault();
+    ev.stopPropagation();
+    var n = sheetN;
+    var current = (n != null && houseColors[n]) || '#0ea5e9';
+    window.ColorWheel.open({
+      initial: current,
+      onPick: function (hex) { applyColor(n, hex); },
+      onCancel: function () {}
+    });
+  }, true);
 
   // ---------------------------------------------------------------- legend
   function ensureLegendEntry(color) {
@@ -1676,7 +1714,7 @@
     if (!community) return;
     showDialog({
       title: 'Reset ' + community.name + '?',
-      message: 'All house colors, legend labels, and markers for this community will be permanently deleted.',
+      message: 'All house colors, legend labels, markers, and routes for this community will be permanently deleted.',
       buttons: [
         { text: 'Cancel' },
         { text: 'Reset', primary: true, danger: true, onTap: function () {
@@ -1684,8 +1722,10 @@
               localStorage.removeItem(storeKey('colors'));
               localStorage.removeItem(storeKey('legend'));
               localStorage.removeItem(storeKey('markers'));
+              localStorage.removeItem(storeKey('routes'));
             } catch (err) {}
-            houseColors = {}; legendEntries = []; markers = [];
+            houseColors = {}; legendEntries = []; markers = []; routes = [];
+            renderRoutes();
             repaintAll();
             gFills.textContent = ''; gLabels.textContent = ''; bldEls = {};
             renderAllPins();
@@ -1886,6 +1926,7 @@
     if (calib.active) calibCancel();
     setLocState(false);
     locStop();
+    if (routeMode) setRouteMode(false);
 
     if (isUserMap && pendingDetectOfferId === community.id) {
       pendingDetectOfferId = null;
@@ -2120,7 +2161,8 @@
         { text: 'Cancel' },
         { text: 'Delete', primary: true, danger: true, onTap: function () {
             BlobStore.remove(entry.blobKey);
-            var kinds = ['colors', 'legend', 'markers', 'buildings', 'landmarks'];
+            var kinds = ['colors', 'legend', 'markers', 'buildings', 'landmarks',
+                         'routes', 'georef'];
             for (var i = 0; i < kinds.length; i++) {
               try { localStorage.removeItem('surveyor:' + entry.id + ':' + kinds[i]); }
               catch (e) {}
@@ -2155,7 +2197,30 @@
   };
 
   var locOn = false, locFollow = false, locLastFix = null, locOffMapToasted = false;
-  var locAccEl = null, locDotG = null;
+  var locAccEl = null, locDotG = null, locArrowG = null, locHeading = null;
+
+  // The compass reports degrees clockwise from true north; add the map's own
+  // rotation relative to north (from the georef: where +latitude points).
+  function mapNorthOffsetDeg() {
+    var g = getGeoref();
+    if (!g) return 0;
+    var vx = g.toMap[1], vy = g.toMap[4];   // map-space direction of +1° latitude
+    return Math.atan2(vx, -vy) * 180 / Math.PI;
+  }
+
+  function updateLocArrow() {
+    if (!locArrowG) return;
+    if (locHeading == null) { locArrowG.style.display = 'none'; return; }
+    locArrowG.style.display = '';
+    locArrowG.setAttribute('transform',
+      'rotate(' + ((locHeading + mapNorthOffsetDeg()) % 360) + ')');
+  }
+
+  window.__headingEvent = function (ev) {
+    if (!ev) return;
+    if (ev.phase === 'unavailable') { locHeading = null; updateLocArrow(); return; }
+    if (isFinite(ev.deg)) { locHeading = +ev.deg; updateLocArrow(); }
+  };
 
   function getGeoref() {
     if (data && data.georef && data.georef.toMap) return data.georef;
@@ -2182,7 +2247,7 @@
 
   function removeLocDot() {
     gLoc.textContent = '';
-    locAccEl = null; locDotG = null;
+    locAccEl = null; locDotG = null; locArrowG = null;
   }
 
   function drawLocFix(fix) {
@@ -2202,6 +2267,11 @@
       locAccEl = svgEl('circle', { 'class': 'loc-acc' }, gLoc);
       locDotG = svgEl('g', {}, gLoc);
       svgEl('circle', { 'class': 'loc-dot-pulse', r: 7 }, locDotG);
+      locArrowG = svgEl('g', { 'class': 'loc-arrow-g' }, locDotG);
+      svgEl('path', { 'class': 'loc-arrow',
+                      d: 'M0,-19 L7.5,-8.5 Q0,-12 -7.5,-8.5 Z' }, locArrowG);
+      locArrowG.style.display = locHeading == null ? 'none' : '';
+      updateLocArrow();
       svgEl('circle', { 'class': 'loc-dot-outer', r: 8 }, locDotG);
       svgEl('circle', { 'class': 'loc-dot-inner', r: 5.5 }, locDotG);
     }
@@ -2231,6 +2301,10 @@
       if (String(res).indexOf('ok') !== 0) {
         toast('Location unavailable (' + res + ')');
         setLocState(false);
+        return;
+      }
+      if (SurveyorNative.startCompass) {
+        try { SurveyorNative.startCompass(); } catch (e2) {}
       }
     } else if (navigator.geolocation) {
       browserWatchId = navigator.geolocation.watchPosition(function (pos) {
@@ -2248,6 +2322,10 @@
     if (window.SurveyorNative && SurveyorNative.stopLocation) {
       try { SurveyorNative.stopLocation(); } catch (e) {}
     }
+    if (window.SurveyorNative && SurveyorNative.stopCompass) {
+      try { SurveyorNative.stopCompass(); } catch (e2) {}
+    }
+    locHeading = null;
     if (browserWatchId != null && navigator.geolocation) {
       navigator.geolocation.clearWatch(browserWatchId);
       browserWatchId = null;
@@ -2469,12 +2547,164 @@
     offerCalibration();
   });
 
+  // --------------------------------------- planned routes (polylines)
+  var routeMode = false;
+  var routeDraft = [];       // [[x,y],...] while drawing
+  var ROUTE_DEFAULT_COLOR = '#1e88e5';
+
+  function saveRoutes() { saveJSON(storeKey('routes'), routes); }
+
+  function routePointsAttr(pts) {
+    var out = [];
+    for (var i = 0; i < pts.length; i++) out.push(pts[i][0] + ',' + pts[i][1]);
+    return out.join(' ');
+  }
+
+  function renderRoutes() {
+    gRoutes.textContent = '';
+    for (var i = 0; i < routes.length; i++) {
+      var r = routes[i];
+      svgEl('polyline', { 'class': 'route-line', points: routePointsAttr(r.pts),
+                          stroke: r.color }, gRoutes);
+      svgEl('polyline', { 'class': 'route-hit', points: routePointsAttr(r.pts),
+                          'data-rid': r.id }, gRoutes);
+    }
+    if (routeMode) renderRouteDraft();
+  }
+
+  function renderRouteDraft() {
+    var old = gRoutes.querySelectorAll('.route-draft');
+    for (var i = old.length - 1; i >= 0; i--) old[i].parentNode.removeChild(old[i]);
+    if (!routeDraft.length) return;
+    if (routeDraft.length >= 2) {
+      svgEl('polyline', { 'class': 'route-line route-draft',
+                          points: routePointsAttr(routeDraft),
+                          stroke: ROUTE_DEFAULT_COLOR,
+                          'stroke-dasharray': '7 5' }, gRoutes);
+    }
+    for (var j = 0; j < routeDraft.length; j++) {
+      svgEl('circle', { 'class': 'route-draft', cx: routeDraft[j][0], cy: routeDraft[j][1],
+                        r: 3.5, fill: '#fff', stroke: ROUTE_DEFAULT_COLOR,
+                        'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }, gRoutes);
+    }
+  }
+
+  function routeAddVertex(cx, cy) {
+    var pt = screenToMap(cx, cy);
+    if (!insideMap(pt.x, pt.y)) { toast('Tap on the map itself'); return; }
+    routeDraft.push([round1(pt.x), round1(pt.y)]);
+    renderRouteDraft();
+  }
+
+  function setRouteMode(on) {
+    routeMode = on;
+    $('routeBtn').classList.toggle('active', on);
+    $('routeHint').hidden = !on;
+    if (on) {
+      routeDraft = [];
+      setEditMode(false);
+      if (markerMode) setMarkerMode(false);
+      closeSheet();
+    } else {
+      routeDraft = [];
+      renderRoutes();
+    }
+  }
+
+  $('routeBtn').addEventListener('click', function () {
+    if (!data) return;
+    if (!routeMode) { setRouteMode(true); return; }
+    // finishing
+    var pts = routeDraft.slice();
+    if (pts.length < 2) {
+      setRouteMode(false);
+      toast('Route discarded — add at least two points next time');
+      return;
+    }
+    setRouteMode(false);
+    showDialog({
+      title: 'Save route',
+      input: { value: 'Route ' + (routes.length + 1), placeholder: 'Route name' },
+      buttons: [
+        { text: 'Discard' },
+        { text: 'Save', primary: true, onTap: function (val) {
+            routes.push({ id: 'r' + Date.now(), label: String(val || '').trim() || 'Route',
+                          color: ROUTE_DEFAULT_COLOR, pts: pts });
+            saveRoutes();
+            renderRoutes();
+            toast('Route saved — tap it any time to rename, recolor, or delete');
+          } }
+      ]
+    });
+  });
+
+  function routeById(id) {
+    for (var i = 0; i < routes.length; i++) if (routes[i].id === id) return routes[i];
+    return null;
+  }
+
+  function openRouteDialog(id) {
+    var r = routeById(id);
+    if (!r) return;
+    showDialog({
+      title: r.label || 'Route',
+      buttons: [
+        { text: 'Delete', danger: true, onTap: function () {
+            showDialog({
+              title: 'Delete “' + (r.label || 'Route') + '”?',
+              buttons: [
+                { text: 'Cancel' },
+                { text: 'Delete', primary: true, danger: true, onTap: function () {
+                    for (var i = 0; i < routes.length; i++) {
+                      if (routes[i].id === id) { routes.splice(i, 1); break; }
+                    }
+                    saveRoutes(); renderRoutes();
+                    toast('Route deleted');
+                  } }
+              ]
+            });
+          } },
+        { text: 'Color', onTap: function () { pickColor(r.color, function (hex) {
+            r.color = hex; saveRoutes(); renderRoutes();
+          }); } },
+        { text: 'Rename', onTap: function () {
+            showDialog({
+              title: 'Rename route',
+              input: { value: r.label, placeholder: 'Route name' },
+              buttons: [
+                { text: 'Cancel' },
+                { text: 'Save', primary: true, onTap: function (val) {
+                    r.label = String(val || '').trim() || r.label;
+                    saveRoutes();
+                  } }
+              ]
+            });
+          } },
+        { text: 'Close', primary: true }
+      ]
+    });
+  }
+
+  // Shared custom-color entry point: RGB wheel when available, native input
+  // as the fallback (dev browsers, or if colorwheel.js failed to load).
+  function pickColor(initial, cb) {
+    if (window.ColorWheel && window.ColorWheel.open) {
+      window.ColorWheel.open({ initial: initial, onPick: cb, onCancel: function () {} });
+    } else {
+      var inp = $('customColor');
+      inp.value = normHex(initial) || '#e53935';
+      var once = function () { inp.removeEventListener('change', once); cb(inp.value); };
+      inp.addEventListener('change', once);
+      inp.click();
+    }
+  }
+
   // --------------------------------------- self-update (GitHub releases)
   var UPDATE = {
     api: 'https://api.github.com/repos/ManxomeFoe/surveyor/releases/latest',
     apkUrl: 'https://github.com/ManxomeFoe/surveyor/releases/latest/download/surveyor.apk',
     page: 'https://github.com/ManxomeFoe/surveyor/releases/latest',
-    fallbackVersion: '1.6',          // used when the native bridge is absent
+    fallbackVersion: '1.7',          // used when the native bridge is absent
     checkEveryMs: 24 * 3600 * 1000   // automatic checks at most once a day
   };
 

@@ -5,12 +5,19 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.hardware.GeomagneticField;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
+import android.view.Surface;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -75,6 +82,14 @@ public class SurveyorBridge {
     private static final long LOCATION_INTERVAL_MS = 2000;
     private static final float LOCATION_MIN_DISTANCE_M = 1f;
 
+    // ---- compass heading (v1.7 addendum) ----
+    /** Heading events: at most every 100 ms AND only on a >= 1 degree change. */
+    private static final long HEADING_INTERVAL_MS = 100;
+    private static final double HEADING_MIN_DELTA_DEG = 1.0;
+    /** Declination cache invalidation: fix moved > 1 km or > 1 h passed. */
+    private static final float DECLINATION_MAX_DISTANCE_M = 1000f;
+    private static final long DECLINATION_MAX_AGE_MS = 3_600_000L;
+
     private final File dir;
     private final Activity activity;
     private final WebView webView;
@@ -89,12 +104,36 @@ public class SurveyorBridge {
     private boolean locationPermissionPending = false;
     private LocationManager locationManager;
 
+    // ---- compass state (v1.7) ----
+    /** JS-desired compass state; set from the JS bridge thread, read on UI thread. */
+    private volatile boolean compassDesired = false;
+    /** Latest location fix seen by the bridge (declination source). Main looper writes. */
+    private volatile Location lastFix;
+    // The fields below are touched ONLY on the UI thread (sensor callbacks
+    // are delivered on the main looper via an explicit Handler).
+    private boolean compassListening = false;
+    private boolean compassUnavailableSent = false;
+    private SensorManager sensorManager;
+    private final float[] rotationMatrix = new float[9];
+    private final float[] remappedMatrix = new float[9];
+    private final float[] orientationAngles = new float[3];
+    private final float[] lastAccel = new float[3];
+    private final float[] lastMag = new float[3];
+    private boolean haveAccel = false;
+    private boolean haveMag = false;
+    private long lastHeadingEmitMs = 0;
+    private double lastHeadingDeg = Double.NaN;
+    private float cachedDeclinationDeg = 0f;
+    private Location declinationFix;
+    private long declinationComputedMs = 0;
+
     /** Single listener for both providers. Callbacks arrive on the main looper. */
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location loc) {
             try {
                 if (loc == null) return;
+                lastFix = loc; // v1.7: newest fix doubles as the declination source
                 emitLocationEvent("{\"phase\":\"fix\",\"lat\":" + loc.getLatitude()
                         + ",\"lon\":" + loc.getLongitude()
                         + ",\"accuracy\":" + (double) loc.getAccuracy()
@@ -460,13 +499,21 @@ public class SurveyorBridge {
         try {
             detachLocationUpdates();
         } catch (Throwable ignored) { }
+        try {
+            detachCompass();
+        } catch (Throwable ignored) { }
     }
 
-    /** MainActivity.onResume hook: re-attach if JS still wants the stream. */
+    /** MainActivity.onResume hook: re-attach if JS still wants the streams. */
     void onActivityResume() {
         try {
             if (locationDesired) {
                 beginLocationFlow();
+            }
+        } catch (Throwable ignored) { }
+        try {
+            if (compassDesired) {
+                attachCompass();
             }
         } catch (Throwable ignored) { }
     }
@@ -593,6 +640,263 @@ public class SurveyorBridge {
                         if (activity.isFinishing() || activity.isDestroyed()) return;
                         webView.evaluateJavascript(
                                 "window.__locationEvent&&window.__locationEvent(" + json + ");",
+                                null);
+                    } catch (Throwable ignored) {
+                        // WebView torn down; drop the event.
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+            // Activity gone; drop the event.
+        }
+    }
+
+    // ----------------------------------------------- compass heading (v1.7)
+
+    /** Sensor callbacks arrive on the main looper (explicit Handler below). */
+    private final SensorEventListener compassListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            try {
+                boolean haveMatrix = false;
+                switch (event.sensor.getType()) {
+                    case Sensor.TYPE_ROTATION_VECTOR: {
+                        // Some devices report >4 values, which older
+                        // getRotationMatrixFromVector implementations reject.
+                        float[] v = event.values;
+                        if (v.length > 4) {
+                            float[] four = new float[4];
+                            System.arraycopy(v, 0, four, 0, 4);
+                            v = four;
+                        }
+                        SensorManager.getRotationMatrixFromVector(rotationMatrix, v);
+                        haveMatrix = true;
+                        break;
+                    }
+                    case Sensor.TYPE_ACCELEROMETER:
+                        System.arraycopy(event.values, 0, lastAccel, 0, 3);
+                        haveAccel = true;
+                        break;
+                    case Sensor.TYPE_MAGNETIC_FIELD:
+                        System.arraycopy(event.values, 0, lastMag, 0, 3);
+                        haveMag = true;
+                        break;
+                    default:
+                        return;
+                }
+                if (!haveMatrix) {
+                    if (!haveAccel || !haveMag) return;
+                    if (!SensorManager.getRotationMatrix(
+                            rotationMatrix, null, lastAccel, lastMag)) {
+                        return; // degenerate reading (free fall etc.)
+                    }
+                }
+                handleRotationMatrix();
+            } catch (Throwable ignored) {
+                // never let a sensor callback crash the app
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+    };
+
+    /**
+     * Starts the compass stream. Headings are posted to
+     * window.__headingEvent({deg}) — degrees clockwise from TRUE north —
+     * throttled to >= 100 ms apart and >= 1 degree change;
+     * {phase:'unavailable'} is emitted once if no usable sensor exists.
+     *
+     * @return "ok" once the flow is initiated, or "err:&lt;reason&gt;". Never throws.
+     */
+    @JavascriptInterface
+    public String startCompass() {
+        try {
+            compassDesired = true;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    compassUnavailableSent = false; // fresh start may re-report
+                    attachCompass();
+                }
+            });
+            return "ok";
+        } catch (Throwable t) {
+            compassDesired = false;
+            return "err:" + safeMessage(t);
+        }
+    }
+
+    /** Stops the compass stream. @return "ok" (never throws). */
+    @JavascriptInterface
+    public String stopCompass() {
+        try {
+            compassDesired = false;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    detachCompass();
+                }
+            });
+            return "ok";
+        } catch (Throwable t) {
+            return "ok"; // desired flag already cleared; stop is best-effort
+        }
+    }
+
+    /**
+     * UI thread. Registers the rotation-vector sensor (preferred) or the
+     * accelerometer+magnetometer pair (fallback) at SENSOR_DELAY_UI on a
+     * main-looper Handler. No usable sensor -> {phase:'unavailable'} once.
+     */
+    private void attachCompass() {
+        if (compassListening || !compassDesired) return;
+        try {
+            if (sensorManager == null) {
+                sensorManager = (SensorManager)
+                        activity.getSystemService(Activity.SENSOR_SERVICE);
+            }
+            if (sensorManager == null) {
+                emitCompassUnavailableOnce();
+                return;
+            }
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            boolean registered = false;
+
+            Sensor rotation = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            if (rotation != null) {
+                registered = sensorManager.registerListener(compassListener, rotation,
+                        SensorManager.SENSOR_DELAY_UI, mainHandler);
+            }
+            if (!registered) {
+                Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                Sensor mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                if (accel != null && mag != null) {
+                    haveAccel = false;
+                    haveMag = false;
+                    boolean okAccel = sensorManager.registerListener(compassListener, accel,
+                            SensorManager.SENSOR_DELAY_UI, mainHandler);
+                    boolean okMag = sensorManager.registerListener(compassListener, mag,
+                            SensorManager.SENSOR_DELAY_UI, mainHandler);
+                    registered = okAccel && okMag;
+                    if (!registered) {
+                        sensorManager.unregisterListener(compassListener);
+                    }
+                }
+            }
+            if (!registered) {
+                emitCompassUnavailableOnce();
+                return;
+            }
+            compassListening = true;
+            lastHeadingDeg = Double.NaN; // always emit the first fresh heading
+            lastHeadingEmitMs = 0;
+        } catch (Throwable t) {
+            emitCompassUnavailableOnce();
+        }
+    }
+
+    /** UI thread. Unregisters the sensor listener; safe when not listening. */
+    private void detachCompass() {
+        if (!compassListening) return;
+        compassListening = false;
+        try {
+            if (sensorManager != null) {
+                sensorManager.unregisterListener(compassListener);
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /** UI thread. Rotation matrix -> display-remapped true-north azimuth -> JS. */
+    private void handleRotationMatrix() {
+        // Remap for the current display rotation so azimuth stays correct in
+        // landscape/reverse orientations.
+        int axisX = SensorManager.AXIS_X;
+        int axisY = SensorManager.AXIS_Y;
+        try {
+            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+            switch (rotation) {
+                case Surface.ROTATION_90:
+                    axisX = SensorManager.AXIS_Y;
+                    axisY = SensorManager.AXIS_MINUS_X;
+                    break;
+                case Surface.ROTATION_180:
+                    axisX = SensorManager.AXIS_MINUS_X;
+                    axisY = SensorManager.AXIS_MINUS_Y;
+                    break;
+                case Surface.ROTATION_270:
+                    axisX = SensorManager.AXIS_MINUS_Y;
+                    axisY = SensorManager.AXIS_X;
+                    break;
+                default:
+                    break; // ROTATION_0: identity
+            }
+        } catch (Throwable ignored) {
+            // display unavailable — use identity remap
+        }
+        SensorManager.remapCoordinateSystem(rotationMatrix, axisX, axisY, remappedMatrix);
+        SensorManager.getOrientation(remappedMatrix, orientationAngles);
+
+        double deg = Math.toDegrees(orientationAngles[0]) + currentDeclinationDeg();
+        deg = ((deg % 360.0) + 360.0) % 360.0; // normalize to [0, 360)
+
+        long now = System.currentTimeMillis();
+        if (now - lastHeadingEmitMs < HEADING_INTERVAL_MS) return;
+        if (!Double.isNaN(lastHeadingDeg)) {
+            double delta = Math.abs(deg - lastHeadingDeg);
+            if (delta > 180.0) delta = 360.0 - delta; // shortest angular distance
+            if (delta < HEADING_MIN_DELTA_DEG) return;
+        }
+        lastHeadingEmitMs = now;
+        lastHeadingDeg = deg;
+        double rounded = Math.round(deg * 10.0) / 10.0;
+        emitHeadingEvent("{\"deg\":" + rounded + "}");
+    }
+
+    /**
+     * UI thread. Magnetic declination at the latest fix, cached and only
+     * recomputed when the fix moved > 1 km or the value is > 1 h old.
+     * 0 until a location fix exists.
+     */
+    private float currentDeclinationDeg() {
+        try {
+            Location fix = lastFix;
+            if (fix == null) return cachedDeclinationDeg; // 0 until first fix
+            long now = System.currentTimeMillis();
+            if (declinationFix != null
+                    && declinationFix.distanceTo(fix) <= DECLINATION_MAX_DISTANCE_M
+                    && now - declinationComputedMs <= DECLINATION_MAX_AGE_MS) {
+                return cachedDeclinationDeg;
+            }
+            GeomagneticField field = new GeomagneticField(
+                    (float) fix.getLatitude(), (float) fix.getLongitude(),
+                    (float) fix.getAltitude(), now);
+            cachedDeclinationDeg = field.getDeclination();
+            declinationFix = fix;
+            declinationComputedMs = now;
+            return cachedDeclinationDeg;
+        } catch (Throwable ignored) {
+            return cachedDeclinationDeg;
+        }
+    }
+
+    /** Emits {phase:'unavailable'} at most once per startCompass() cycle. */
+    private void emitCompassUnavailableOnce() {
+        if (compassUnavailableSent) return;
+        compassUnavailableSent = true;
+        emitHeadingEvent("{\"phase\":\"unavailable\"}");
+    }
+
+    /** Same hardened runOnUiThread + evaluateJavascript path as the others. */
+    private void emitHeadingEvent(final String json) {
+        try {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        webView.evaluateJavascript(
+                                "window.__headingEvent&&window.__headingEvent(" + json + ");",
                                 null);
                     } catch (Throwable ignored) {
                         // WebView torn down; drop the event.
