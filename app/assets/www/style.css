@@ -241,6 +241,38 @@ button {
   pointer-events: none;
 }
 
+#sheetAddrRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 10px;
+}
+#sheetAddr {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#sheetAddr.no-addr { color: var(--ink-2); font-style: italic; }
+#editAddrBtn {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent, #1e88e5);
+  background: rgba(30, 136, 229, .1);
+}
+.result-item .r-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
 .route-line {
   fill: none;
   stroke-width: 4;

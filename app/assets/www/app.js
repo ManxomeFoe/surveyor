@@ -82,6 +82,8 @@
   var legendEntries = [];    // [ { color, label } ] (insertion order preserved)
   var markers = [];          // [ { id, x, y, label } ]
   var routes = [];           // [ { id, label, color, pts:[[x,y],...] } ]
+  var addrs = {};            // { n -> address string } user overrides; builtin
+                             // addresses live on the building records (b.addr)
 
   var bldEls = {};           // n -> { fill, label } (created lazily)
   var bldByN = {};           // n -> building record (from MAP_DATA or user set)
@@ -140,6 +142,11 @@
         markers.push({ id: String(m.id || ('m' + j + '_' + Date.now())),
                        x: +m.x, y: +m.y, label: String(m.label || '') });
       }
+    }
+    addrs = {};
+    var rawAddrs = loadJSON(storeKey('addrs'), {});
+    for (var a in rawAddrs) {
+      if (typeof rawAddrs[a] === 'string' && rawAddrs[a]) addrs[a] = rawAddrs[a];
     }
     routes = [];
     var rawRoutes = loadJSON(storeKey('routes'), []);
@@ -1281,9 +1288,47 @@
     }
   }
 
+  function saveAddrs() { saveJSON(storeKey('addrs'), addrs); }
+
+  // user override wins; builtin data (from OSM/official sources) as fallback
+  function effectiveAddr(n) {
+    if (addrs[n]) return addrs[n];
+    var b = bldByN[n];
+    return (b && b.addr) ? String(b.addr) : '';
+  }
+
+  function refreshSheetAddr() {
+    if (sheetN == null) return;
+    var addr = effectiveAddr(sheetN);
+    var el = $('sheetAddr');
+    el.textContent = addr || 'No address recorded';
+    el.className = addr ? '' : 'no-addr';
+    $('editAddrBtn').textContent = addr ? 'Edit' : 'Add';
+  }
+
+  $('editAddrBtn').addEventListener('click', function () {
+    if (sheetN == null) return;
+    var n = sheetN;
+    showDialog({
+      title: 'Address of building ' + n,
+      input: { value: effectiveAddr(n), placeholder: 'e.g. 23 Beach Road' },
+      buttons: [
+        { text: 'Cancel' },
+        { text: 'Save', primary: true, onTap: function (val) {
+            var v = String(val || '').trim();
+            if (v) addrs[n] = v;
+            else delete addrs[n];   // empty clears the override -> builtin
+            saveAddrs();
+            refreshSheetAddr();
+          } }
+      ]
+    });
+  });
+
   function openColorSheet(n) {
     sheetN = String(n);
     $('sheetTitle').textContent = 'Building ' + n;
+    refreshSheetAddr();
     var current = houseColors[sheetN] || null;
     var btns = $('palette').children;
     for (var i = 0; i < btns.length; i++) {
@@ -1616,6 +1661,19 @@
       }
     }
     var lq = q.toLowerCase();
+    // addresses: user overrides + builtin, substring match (also for numeric
+    // queries — "23" should surface "23 Beach Road" alongside building 23)
+    var seen = {};
+    for (var i2 = 0; i2 < out.length; i2++) if (out[i2].n != null) seen[out[i2].n] = true;
+    for (var an in bldByN) {
+      if (out.length >= 10) break;
+      if (seen[an]) continue;
+      var addr = effectiveAddr(an);
+      if (addr && addr.toLowerCase().indexOf(lq) >= 0) {
+        out.push({ kind: 'building', n: +an, addr: addr, byAddr: true });
+        seen[an] = true;
+      }
+    }
     var lms = (data.landmarks || []);
     for (var j = 0; j < lms.length && out.length < 12; j++) {
       if (String(lms[j].label || '').toLowerCase().indexOf(lq) >= 0) {
@@ -1642,9 +1700,20 @@
     var b = document.createElement('button');
     b.className = 'result-item' + (r.kind === 'landmark' ? ' landmark' : '');
     var iconTxt = r.kind === 'landmark' ? '★' : '#';
-    var labelTxt = r.kind === 'landmark' ? String(r.lm.label) : ('Building ' + r.n);
+    var labelTxt, subTxt = '';
+    if (r.kind === 'landmark') {
+      labelTxt = String(r.lm.label);
+    } else if (r.byAddr) {
+      labelTxt = r.addr;                       // matched by address: lead with it
+      subTxt = 'Building ' + r.n;
+    } else {
+      labelTxt = 'Building ' + r.n;
+      subTxt = effectiveAddr(r.n);
+    }
     b.innerHTML = '<span class="r-icon">' + iconTxt + '</span><span>' +
-                  escapeHtml(labelTxt) + '</span>';
+                  escapeHtml(labelTxt) +
+                  (subTxt ? '<span class="r-sub">' + escapeHtml(subTxt) + '</span>' : '') +
+                  '</span>';
     b.addEventListener('click', function () {
       hideSearchResults();
       searchInput.blur();
@@ -1887,7 +1956,9 @@
       var b = raw[i];
       if (b && isFinite(b.n) && isFinite(b.cx) && isFinite(b.cy) &&
           b.pts && b.pts.length >= 3) {
-        out.push({ n: +b.n, cx: +b.cx, cy: +b.cy, pts: b.pts });
+        var clean = { n: +b.n, cx: +b.cx, cy: +b.cy, pts: b.pts };
+        if (typeof b.addr === 'string' && b.addr) clean.addr = b.addr;
+        out.push(clean);
       }
     }
     return out;
@@ -2162,7 +2233,7 @@
         { text: 'Delete', primary: true, danger: true, onTap: function () {
             BlobStore.remove(entry.blobKey);
             var kinds = ['colors', 'legend', 'markers', 'buildings', 'landmarks',
-                         'routes', 'georef'];
+                         'routes', 'georef', 'addrs'];
             for (var i = 0; i < kinds.length; i++) {
               try { localStorage.removeItem('surveyor:' + entry.id + ':' + kinds[i]); }
               catch (e) {}
